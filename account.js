@@ -32,6 +32,9 @@ const allowNone = {
 
 let badge = {
 	dev: "An official Selenite developer.",
+	donate: "A Selenite donator.",
+	mod: "An official Selenite moderator.",
+	owner: "The owner of Selenite (/u/sky)",
 };
 
 let rawProfileHTML = fs.readFileSync("./html/profile.html").toString();

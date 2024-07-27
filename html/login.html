@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html class="sl-theme-dark" lang="en">
+	<head>
+		<!-- initialize theme vars
+    https://coolors.co/10002b-240046-3c096c-5a189a-7b2cbf-9d4edd-c77dff-e0aaff -->
+
+		<!-- initialize externals -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+		<script src=" https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js "></script>
+
+		<!-- initialize my stuff -->
+		<script src="/js/all.min.js"></script>
+		<script src="/js/main.js"></script>
+
+		<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+
+		<link rel="stylesheet" href="/style.css" />
+
+		<!-- seo + other things -->
+		<title>Profile</title>
+		<link rel="icon" href="/favicon.ico" />
+		<script>
+			document.addEventListener("DOMContentLoaded", () => {
+				document.getElementById("login").addEventListener("submit", async (e) => {
+					e.preventDefault();
+
+					let username = document.getElementById("username").value;
+					let password = document.getElementById("password").value;
+					let captcha = document.getElementById("hcaptcha").firstChild.dataset.hcaptchaResponse;
+
+					let data = await (
+						await fetch("/login", {
+							method: "POST",
+							body: JSON.stringify({
+								username: username,
+								password: password,
+								"h-captcha-response": captcha,
+							}),
+							headers: {
+								"Content-type": "application/json; charset=UTF-8",
+							},
+						})
+					).json();
+					if (data.success == true) {
+						console.log("Token: ", data.token);
+						document.cookie = `token=${data.token}; expires=${new Date(new Date().setMonth(new Date().getMonth() + 6)).toUTCString()}; path=/;`;
+						location.href = "/u/";
+					} else {
+						console.log("Error: ", data.reason);
+						document.getElementById("title").innerText = "Failed to login";
+						document.getElementById("reason").innerText = data.reason;
+						document.getElementById("popup").style.display = "flex";
+						hcaptcha.reset();
+						document.getElementById("close").addEventListener("click", () => {
+							document.getElementById("popup").style.display = "none";
+						});
+					}
+				});
+			});
+		</script>
+	</head>
+	<alerts> </alerts>
+	<body id="noscroll">
+		<header>
+			<a href="/index.html">Home</a>
+			<a href="/bookmarklets.html">Bookmarklets</a>
+			<a href="/projects.html">Games</a>
+			<a href="/apps.html">Apps</a>
+			<a href="/settings.html">Settings</a>
+			<a id="blank" href="#">Open Blank</a>
+			<a href="/u/" class="usericon"><img src="/img/user.svg" /></a>
+		</header>
+		<main id="main" class="noscroll">
+			<h2>Login to your account</h2>
+			<form onsubmit="return false;" id="login">
+				<input type="text" id="username" placeholder="username" />
+				<input type="password" id="password" placeholder="password" />
+				<br />
+				<a href="/reset">Forgot password?</a> or <a href="/register">Create a free account</a><br />
+				<div class="h-captcha" id="hcaptcha" data-sitekey="1774ec96-39be-4fb0-9e82-f4c62354b8fa"></div>
+				<button type="submit" value="Submit">Login</button>
+			</form>
+		</main>
+		<popups>
+			<div id="popup" style="display: none">
+				<h1 id="title"></h1>
+				<p id="reason"></p>
+				<button id="close">X</button>
+			</div>
+		</popups>
+		<footer class="noscroll">
+			<a href="https://codeberg.org/skysthelimitt/selenite">Source</a>
+			<a href="https://discord.gg/7jyufnwJNf">Discord</a>
+			<a href="/suggest.html">Suggestions & Bugs</a>
+			<a href="/contact.html">Contact</a>
+			<a href="/support.html">Donate</a>
+			<a href="/about.html">About</a>
+		</footer>
+	</body>
+</html>

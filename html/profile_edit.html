@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html class="sl-theme-dark" lang="en">
+	<head>
+		<!-- initialize theme vars
+    https://coolors.co/10002b-240046-3c096c-5a189a-7b2cbf-9d4edd-c77dff-e0aaff -->
+
+		<!-- initialize externals -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+		<script src=" https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js "></script>
+
+		<!-- initialize my stuff -->
+		<script src="/js/all.min.js"></script>
+		<script src="/js/main.js"></script>
+
+		<link rel="stylesheet" href="/style.css" />
+
+		<!-- seo + other things -->
+		<title>Profile</title>
+		<link rel="icon" href="/favicon.ico" />
+		<script>
+			let userData;
+			(async () => {
+				userData = await (await fetch("/u/raw")).json();
+			})();
+			function readFileAsDataURL(file) {
+				console.log("recieved file");
+				return new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => resolve(reader.result);
+					reader.onerror = (error) => reject(error);
+					reader.readAsDataURL(file);
+				});
+			}
+			let currentState;
+			async function setProfile() {
+				let body;
+				if (state == "name") {
+					body = { name: document.getElementById("text").value };
+				} else if (state == "bio") {
+					body = { about: document.getElementById("text").value };
+				} else if (state == "custom") {
+					body = { custom: document.getElementById("text").value };
+				} else if (state == "pfp") {
+					console.log("pfp");
+					let file = document.getElementById("pfp_upload").files[0];
+					if (file.size > 4000000) {
+						file.input = "";
+						return;
+					}
+					const fileData = await readFileAsDataURL(file);
+					console.log("promise finished");
+					body = { pfp: fileData };
+					console.log("body set");
+				} else if (state == "close") {
+					return;
+				} else if (state == "upload") {
+					body = { data: { cookies: document.cookie, localStorage: JSON.stringify(localStorage) } };
+					let data = await (
+						await fetch("/api/account/upload", {
+							credentials: "include",
+							headers: {
+								"Content-type": "application/json; charset=UTF-8",
+							},
+							body: JSON.stringify(body),
+							method: "POST",
+							mode: "cors",
+						})
+					).json();
+					document.getElementById("pfp_upload").style.display = "none";
+					document.getElementById("pfp_reminder").style.display = "none";
+					document.getElementById("body-text").style.display = "none";
+					document.getElementById("counter").style.display = "none";
+					document.getElementById("ai").style.display = "none";
+					document.getElementById("submit").style.display = "none";
+					if (data.success) {
+						document.getElementById("title").innerText = "Upload successful!";
+						document.getElementById("text").style.display = "none";
+						document.getElementById("popup").style.display = "flex";
+					} else {
+						document.getElementById("title").innerText = "Upload failed. This probably means something bad happened, send an email to support@selenite.cc or ping @skysthelimit.dev";
+						document.getElementById("text").style.display = "none";
+						document.getElementById("popup").style.display = "flex";
+					}
+					return;
+				} else if (state == "download") {
+					let data = await (
+						await fetch("/api/account/load", {
+							credentials: "include",
+							headers: {
+								"Content-type": "application/json; charset=UTF-8",
+							},
+							method: "GET",
+							mode: "cors",
+						})
+					).json();
+					console.log(data);
+					data = JSON.parse(data.data);
+					console.log(document.cookie);
+					let cookies = data.cookies.split("; ");
+					for (let i = 0; i < cookies.length; i++) {
+						let cookieData = cookies[i].split("=");
+						if (cookieData[0] !== "token") {
+							document.cookie = `${encodeURIComponent(cookieData[0])}=${encodeURIComponent(cookieData[1])}; path=/`;
+						}
+					}
+					localStorage.clear();
+					let storage = JSON.parse(data.localStorage);
+					let storeNames = Object.keys(storage);
+					console.log(localStorage);
+					for (let i = 0; i < storeNames.length; i++) {
+						localStorage.setItem(storeNames[i], storage[storeNames[i]]);
+					}
+					document.getElementById("pfp_upload").style.display = "none";
+					document.getElementById("pfp_reminder").style.display = "none";
+					document.getElementById("body-text").style.display = "none";
+					document.getElementById("counter").style.display = "none";
+					document.getElementById("ai").style.display = "none";
+					document.getElementById("submit").style.display = "none";
+					if (data.success) {
+						document.getElementById("title").innerText = "Download successful!";
+						document.getElementById("text").style.display = "none";
+						document.getElementById("popup").style.display = "flex";
+					} else {
+						document.getElementById("title").innerText = "Upload failed. This probably means something bad happened, send an email to support@selenite.cc or ping @skysthelimit.dev";
+						document.getElementById("text").style.display = "none";
+						document.getElementById("popup").style.display = "flex";
+					}
+				}
+				console.log("sending");
+				await fetch("/api/profile/edit", {
+					credentials: "include",
+					headers: {
+						"Content-type": "application/json; charset=UTF-8",
+					},
+					body: JSON.stringify(body),
+					method: "POST",
+					mode: "cors",
+				});
+				console.log("sent");
+				document.getElementById("popup").style.display = "none";
+				location.reload();
+			}
+			document.addEventListener("DOMContentLoaded", async () => {
+				document.getElementById("pfp_upload").addEventListener("change", (e) => {
+					if (e.target.files[0].size > 4000000) {
+						console.log("too big!! no upload!!");
+						e.target.value = "";
+					}
+				});
+				document.getElementById("submit").addEventListener("click", await setProfile);
+				document.getElementById("ai").addEventListener("click", async () => {
+					let data = prompt("what do you want?");
+					let response = await (
+						await fetch("/groq", {
+							credentials: "include",
+							headers: {
+								"Content-type": "application/json; charset=UTF-8",
+							},
+							body: JSON.stringify({ msg: data }),
+							method: "POST",
+							mode: "cors",
+						})
+					).text();
+					document.getElementById("text").value = response.replace("`", "");
+					document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
+				});
+				document.querySelectorAll("#edit").forEach((element) => {
+					element.addEventListener("click", (e) => {
+						console.log(e.target.parentElement.children[0].id);
+						if (e.target.parentElement.children[0].id == "name") {
+							state = "name";
+							document.getElementById("title").innerText = "Set your name.";
+							document.getElementById("text").setAttribute("maxlength", "20");
+							document.getElementById("pfp_upload").style.display = "none";
+							document.getElementById("pfp_reminder").style.display = "none";
+							document.getElementById("body-text").style.display = "none";
+							document.getElementById("text").style.display = "flex";
+							document.getElementById("text").value = userData["name"];
+							document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
+							document.getElementById("counter").style.display = "flex";
+							document.getElementById("submit").style.display = "flex";
+							document.getElementById("popup").style.display = "flex";
+						} else if (e.target.parentElement.children[0].id == "bio") {
+							state = "bio";
+							document.getElementById("title").innerText = "Set your about me.";
+							document.getElementById("text").setAttribute("maxlength", "200");
+							document.getElementById("pfp_upload").style.display = "none";
+							document.getElementById("pfp_reminder").style.display = "none";
+							document.getElementById("body-text").style.display = "none";
+							document.getElementById("text").style.display = "flex";
+							document.getElementById("text").value = userData["about"];
+							document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
+							document.getElementById("counter").style.display = "flex";
+							document.getElementById("ai").style.display = "none";
+							document.getElementById("submit").style.display = "flex";
+							document.getElementById("popup").style.display = "flex";
+						} else if (e.target.parentElement.children[0].id == "custom") {
+							state = "custom";
+							document.getElementById("title").innerText = "Set your custom CSS.";
+							document.getElementById("text").setAttribute("maxlength", "2048");
+							document.getElementById("pfp_upload").style.display = "none";
+							document.getElementById("pfp_reminder").style.display = "none";
+							document.getElementById("body-text").style.display = "none";
+							document.getElementById("text").style.display = "flex";
+							document.getElementById("text").value = userData["css"];
+							document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
+							document.getElementById("counter").style.display = "flex";
+							document.getElementById("ai").style.display = "flex";
+							document.getElementById("submit").style.display = "flex";
+							document.getElementById("popup").style.display = "flex";
+						} else if (e.target.parentElement.children[0].id == "pfp") {
+							state = "pfp";
+							document.getElementById("title").innerText = "Set your new profile picture.";
+							document.getElementById("pfp_upload").style.display = "flex";
+							document.getElementById("pfp_reminder").style.display = "flex";
+							document.getElementById("body-text").style.display = "none";
+							document.getElementById("text").style.display = "none";
+							document.getElementById("counter").style.display = "none";
+							document.getElementById("ai").style.display = "none";
+							document.getElementById("submit").style.display = "flex";
+							document.getElementById("popup").style.display = "flex";
+						}
+					});
+				});
+				document.getElementById("close").addEventListener("click", () => {
+					document.getElementById("popup").style.display = "none";
+				});
+				document.getElementById("text").addEventListener("input", () => {
+					document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
+				});
+				document.getElementById("upload").addEventListener("click", async () => {
+					state = "upload";
+					document.getElementById("title").innerText = "Warning";
+					document.getElementById("pfp_upload").style.display = "none";
+					document.getElementById("pfp_reminder").style.display = "none";
+					document.getElementById("body-text").style.display = "flex";
+					document.getElementById("body-text").innerText = "This will overwrite any data you may have saved in the cloud. Click Submit to continue, or X to stop.";
+					document.getElementById("text").style.display = "none";
+					document.getElementById("counter").style.display = "none";
+					document.getElementById("ai").style.display = "none";
+					document.getElementById("submit").style.display = "flex";
+					document.getElementById("popup").style.display = "flex";
+				});
+				document.getElementById("download").addEventListener("click", async () => {
+					state = "download";
+					document.getElementById("title").innerText = "Warning";
+					document.getElementById("pfp_upload").style.display = "none";
+					document.getElementById("pfp_reminder").style.display = "none";
+					document.getElementById("body-text").style.display = "flex";
+					document.getElementById("body-text").innerText = "This will overwrite any data you may have saved locally. Click Submit to continue, or X to stop.";
+					document.getElementById("text").style.display = "none";
+					document.getElementById("counter").style.display = "none";
+					document.getElementById("ai").style.display = "none";
+					document.getElementById("submit").style.display = "flex";
+					document.getElementById("popup").style.display = "flex";
+				});
+			});
+		</script>
+	</head>
+	<alerts> </alerts>
+	<body id="noscroll">
+		<header>
+			<a href="/index.html">Home</a>
+			<a href="/bookmarklets.html">Bookmarklets</a>
+			<a href="/projects.html">Games</a>
+			<a href="/apps.html">Apps</a>
+			<a href="/settings.html">Settings</a>
+			<a id="blank" href="#">Open Blank</a>
+			<a href="/u/" class="usericon"><img src="/img/user.svg" /></a>
+		</header>
+		<main>
+			<input type="text" readonly value="{{ url_gen }}" />
+			<div class="samerow">
+				<button id="download">Download Backup</button>
+				<button id="upload">Upload Backup</button>
+			</div>
+			<div>
+				<div id="custom"></div>
+				{{ css_edit }}
+			</div>
+			<div class="profile top">
+				<img src="{{ user_pfp }}" class="pfp" id="pfp" />
+				<img src="/img/edit.svg" id="edit" />
+				<div class="profile top text">
+					<div class="samerow edit" id="name">
+						<h1 id="name">{{ name }}</h1>
+						<img src="/img/edit.svg" id="edit" />
+					</div>
+					<div class="samerow">{{ badges }}</div>
+					<h2>Joined {{ join_date }}</h2>
+					<h2>Last online {{ online_time }}</h2>
+				</div>
+				<div class="profile top text right">
+					<div class="samerow edit" id="about">
+						<h1 id="bio">Bio</h1>
+						<img src="/img/edit.svg" id="edit" />
+					</div>
+					<h2 id="about">{{ about }}</h2>
+				</div>
+			</div>
+		</main>
+		<popups>
+			<div id="popup" style="display: none">
+				<h1 id="title"></h1>
+				<p id="body-text"></p>
+				<input type="text" id="text" />
+				<p id="counter">0 / 0</p>
+				<input type="file" id="pfp_upload" name="filename" accept=".png,.jpg,.jpeg,.gif,.avif,.webp,.tiff,.svg" />
+				<p id="pfp_reminder">4 MB file upload max</p>
+				<button id="submit">Submit</button>
+				<button id="close">X</button>
+				<button id="ai">✨</button>
+			</div>
+		</popups>
+		<footer class="noscroll">
+			<a href="https://codeberg.org/skysthelimitt/selenite">Source</a>
+			<a href="https://discord.gg/7jyufnwJNf">Discord</a>
+			<a href="/suggest.html">Suggestions & Bugs</a>
+			<a href="/contact.html">Contact</a>
+			<a href="/support.html">Donate</a>
+			<a href="/about.html">About</a>
+		</footer>
+	</body>
+</html>

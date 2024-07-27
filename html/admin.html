@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html class="sl-theme-dark" lang="en">
+	<head>
+		<!-- initialize theme vars
+    https://coolors.co/10002b-240046-3c096c-5a189a-7b2cbf-9d4edd-c77dff-e0aaff -->
+
+		<!-- initialize externals -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+		<script src=" https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js "></script>
+
+		<!-- initialize my stuff -->
+		<script src="/js/all.min.js"></script>
+		<script src="/js/main.js"></script>
+
+		<link rel="stylesheet" href="/style.css" />
+
+		<!-- seo + other things -->
+		<title>Profile</title>
+		<link rel="icon" href="/favicon.ico" />
+	</head>
+	<alerts> </alerts>
+	<body id="noscroll">
+		<header>
+			<a href="/index.html">Home</a>
+			<a href="/bookmarklets.html">Bookmarklets</a>
+			<a href="/projects.html">Games</a>
+			<a href="/apps.html">Apps</a>
+			<a href="/settings.html">Settings</a>
+			<a id="blank" href="#">Open Blank</a>
+			<a href="/u/" class="usericon"><img src="/img/user.svg" /></a>
+		</header>
+		<script>
+			async function addBadge() {
+				let name = prompt("username");
+				let badge = prompt("badge name");
+
+				let run = await fetch("/api/admin/badge", {
+					method: "POST",
+					body: JSON.stringify({
+						username: name,
+						badge: badge
+					}),
+					headers: {
+						"Content-type": "application/json; charset=UTF-8",
+					},
+				});
+				alert(JSON.stringify(run));
+			}
+			function announce() {
+				let key = prompt("enter key");
+				let announcement = prompt("enter announcement");
+				socket.send(`${key}.${announcement}`)
+			}
+		</script>
+		<main>
+			<button onclick="addBadge()">Add a badge</button>
+			<button onclick="announce()">Send announcement</button>
+		</main>
+		<footer class="noscroll">
+			<a href="https://codeberg.org/skysthelimitt/selenite">Source</a>
+			<a href="https://discord.gg/7jyufnwJNf">Discord</a>
+			<a href="/suggest.html">Suggestions & Bugs</a>
+			<a href="/contact.html">Contact</a>
+			<a href="/support.html">Donate</a>
+			<a href="/about.html">About</a>
+		</footer>
+	</body>
+</html>

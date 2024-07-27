@@ -73,7 +73,7 @@ async function createAccount(name, pass, captcha) {
 		const hash_pass = JSON.stringify({ pass: new_pass, salt: salt });
 		let secret_key = rword.generate(6, { length: "3-7" }).join(" ").toUpperCase();
 		await account_db.create({ id: id, username: name, name: name, hashed_pass: hash_pass, secret_key: secret_key });
-		await account_db.update({ last_login: new Date() }, { where: { username: name } });
+		await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: name } });
 
 		return { success: true, key: secret_key };
 	} catch (e) {
@@ -193,7 +193,7 @@ async function loginAccount(name, pass, captcha) {
 	const new_pass = crypto.createHash("sha256").update(salted_pass).digest("hex");
 
 	if (account_pass.pass == new_pass) {
-		await account_db.update({ last_login: new Date() }, { where: { username: name } });
+		await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: name } });
 		return { success: true, token: await generateCookie(name, pass) };
 	} else {
 		return { success: false, reason: "Incorrect password." };

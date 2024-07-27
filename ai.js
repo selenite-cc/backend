@@ -1,15 +1,15 @@
 import Groq from "groq-sdk";
 
-let groq = [];
+// let groq = [];
 let groq_keys = JSON.parse(process.env.GROQ_API_KEY);
-for(let i = 0;i<groq_keys.length;i++) {
-	groq[i] = new Groq({ apiKey: groq_keys[i] });
-}
+// for(let i = 0;i<groq_keys.length;i++) {
+// 	groq[i] = new Groq({ apiKey: groq_keys[i] });
+// }
 
-//const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: groq_keys[0] });
 
 async function getGroqChatCompletion(message) {
-	return groq[Math.floor(Math.random() * groq_keys.length)].chat.completions.create({
+	return groq.chat.completions.create({
 		messages: [
 			{
 				role: "system",

@@ -49,7 +49,7 @@ async function createAccount(name, pass, captcha) {
 		if (!captcha) {
 			return { success: false, reason: "No captcha response." };
 		}
-		if (!/^((?=\S*?[A-Z])(?=\S*?[a-z])(?=\S*?[0-9]).{6,})\S$/.test(pass)) {
+		if (!/^((?=\S*?[A-Z])(?=\S*?[a-z])(?=\S*?[0-9]).{5,})\S$/.test(pass)) {
 			return { success: false, reason: "Bad password." };
 		}
 		const response = await axios.post("https://api.hcaptcha.com/siteverify", `response=${captcha}&secret=${process.env.HCAPTCHA_SECRET}`);

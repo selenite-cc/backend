@@ -9,7 +9,6 @@ import mime from "mime-types";
 import compression from "compression";
 import { account_db } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
-import httpProxy from "http-proxy";
 import { removeAccount, generateAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { getGroqChatCompletion } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
@@ -21,16 +20,12 @@ app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
-// add proxying to the mc server, so you can do selenite.cc/mc and connect
-let proxy = httpProxy.createServer({ ws: true });
-app.use("/mc", (req, res) => {
-	proxy.web(req, res, {
-		target: "wss://mc.selenite.cc",
-	});
-});
+
+let retarded_proxy = createProxyMiddleware({ target: 'https://ethereal.mov', ws: true });
+
 import WebSocket, { WebSocketServer } from "ws";
 const wss = new WebSocketServer({ noServer: true });
-wss.on("connection", function connection(ws, req) {
+wss.on("connection", function connection(ws, req, res) {
 	setInterval(() => {
 		ws.send("ping");
 	}, 30000);
@@ -45,7 +40,7 @@ wss.on("connection", function connection(ws, req) {
 					client.send(message.replace(process.env.ANNOUNCEMENT_KEY, "announce."));
 				}
 			});
-		} else if (message.startsWith("token") && await verifyCookie(message.substring(6))) {
+		} else if (message.startsWith("token") && (await verifyCookie(message.substring(6)))) {
 			ws.id = await getUserFromCookie(message.substring(6));
 			ws.send(ws.id);
 			await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: ws.id } });
@@ -76,16 +71,6 @@ wss.on("connection", function connection(ws, req) {
 
 	ws.on("close", () => {});
 });
-app.on("upgrade", function upgrade(request, socket, head) {
-	const { pathname } = new URL(request.url, "wss://base.url");
-	if (pathname === "/socket") {
-		wss.handleUpgrade(request, socket, head, function done(ws) {
-			wss.emit("connection", ws, request);
-		});
-	} else {
-		socket.destroy();
-	}
-});
 
 app.post(
 	"/api/event",
@@ -115,22 +100,30 @@ app.post("/groq", async (req, res) => {
 	res.send((await getGroqChatCompletion(req.body.msg)).choices[0]?.message?.content || "");
 });
 app.use(["/register", "/login"], async (req, res, next) => {
-	console.log
-	if (req.cookies.token && await verifyCookie(req.cookies.token)) {
+	console.log;
+	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		res.redirect("/u/");
 	} else {
-		res.type("text/html").status(200).send(await fs.readFile(`./html${req.baseUrl}.html`));
+		res
+			.type("text/html")
+			.status(200)
+			.send(await fs.readFile(`./html${req.baseUrl}.html`));
 	}
 });
 app.use("/users", async (req, res, next) => {
-	res.type("text/html").status(200).send(await fs.readFile(`./html/users.html`));
+	res
+		.type("text/html")
+		.status(200)
+		.send(await fs.readFile(`./html/users.html`));
 });
 app.use("/reset", async (req, res, next) => {
-	res.type("text/html").status(200).send(await fs.readFile(`./html/reset.html`));
-
+	res
+		.type("text/html")
+		.status(200)
+		.send(await fs.readFile(`./html/reset.html`));
 });
 app.post("/api/account/upload", async (req, res, next) => {
-	if (req.cookies.token && await verifyCookie(req.cookies.token)) {
+	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		let status = await saveData(req.cookies.token, req.body.data);
 		if (status["success"]) {
 			res.status(200).send(status);
@@ -146,7 +139,7 @@ app.use("/api/generateAccount", async (req, res, next) => {
 	res.send(200);
 });
 app.use("/api/account/load", async (req, res, next) => {
-	if (req.cookies.token && await verifyCookie(req.cookies.token)) {
+	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		let status = await retrieveData(req.cookies.token);
 		if (status["success"]) {
 			res.status(200).send(status);
@@ -164,13 +157,16 @@ app.use("/api/getUsers", async (req, res, next) => {
 });
 
 app.use("/admin", async (req, res, next) => {
-	if (await isAdmin(req.cookies.token) && await verifyCookie(req.cookies.token)) {
-		res.type("text/html").status(200).send(await fs.readFile(`./html/admin.html`));
+	if ((await isAdmin(req.cookies.token)) && (await verifyCookie(req.cookies.token))) {
+		res
+			.type("text/html")
+			.status(200)
+			.send(await fs.readFile(`./html/admin.html`));
 	} else {
 		next();
 	}
 });
-app.use('/', express.static('./selenite', {extensions: ["html"]}));
+app.use("/", express.static("./selenite", { extensions: ["html"] }));
 app.use("/data/:id/:file", async (req, res) => {
 	const id = path.basename(req.params.id);
 	const file = path.basename(req.params.file);
@@ -192,23 +188,22 @@ app.use("/data/:id/:file", async (req, res) => {
 	}
 });
 
-
 app.use("/u/raw", async (req, res) => {
-	if (req.cookies.token && await verifyCookie(req.cookies.token)) {
+	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		res.send(await getRawData(req.cookies.token));
 	} else {
 		res.redirect("/login");
 	}
 });
 app.use("/u/:username", async (req, res) => {
-	if(["skysthelimit.dev", "skysthelimit", "selenite.cc", "selenite"].includes(req.params.username)) {
+	if (["skysthelimit.dev", "skysthelimit", "selenite.cc", "selenite", "owner", "admin"].includes(req.params.username)) {
 		res.redirect("/u/sky");
 	}
 	res.send(await generateAccountPage(req.params.username, req.cookies.token));
 });
 
 app.use("/u/", async (req, res) => {
-	if (req.cookies.token && await verifyCookie(req.cookies.token)) {
+	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		res.send(await generateAccountPage(req.params.username, req.cookies.token));
 	} else {
 		res.redirect("/login");
@@ -243,11 +238,7 @@ app.post("/api/admin/badge", async (req, res) => {
 });
 app.post("/api/admin/removeAcc", async (req, res) => {
 	let status = await removeAccount(req.body.username, req.cookies.token);
-	if (status["success"]) {
-		res.status(200).send(status);
-	} else {
-		res.status(400).send(status);
-	}
+	res.status(200).send(status);
 });
 
 const server = app.listen(port, () => {
@@ -255,11 +246,17 @@ const server = app.listen(port, () => {
 	console.log("- " + log.info("http://localhost:" + port));
 });
 server.on("upgrade", (request, socket, head) => {
+	if(request.url == "/mc") {
+		retarded_proxy.upgrade(request, socket, head);
+	}
 	wss.handleUpgrade(request, socket, head, (socket) => {
 		wss.emit("connection", socket, request);
 	});
 });
 
 app.use(async (req, res) => {
-	res.type("text/html").send(await fs.readFile(`./selenite/404.html`)).status(404);
-})
+	res
+		.type("text/html")
+		.send(await fs.readFile(`./selenite/404.html`))
+		.status(404);
+});

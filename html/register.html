@@ -21,23 +21,34 @@
 		<link rel="icon" href="/favicon.ico" />
 		<script>
 			document.addEventListener("DOMContentLoaded", () => {
-				document.getElementById("register").addEventListener("submit", async (e) => {
-					e.preventDefault();
-
+				document.getElementById("close").addEventListener("click", () => {
+					document.getElementById("popup").style.display = "none";
+					if (document.getElementById("title").innerText == "Registered successfully") {
+						location.href = "/login";
+					}
+				});
+				document.getElementById("register").addEventListener("click", async () => {
 					let username = document.getElementById("username").value;
 					let password = document.getElementById("password").value;
 					let captcha = document.getElementById("hcaptcha").firstChild.dataset.hcaptchaResponse;
-					if (username.length < 17 && username.length > 2 && !/[^a-zAZ0-9._-]/.test(username)) {
-						console.log("valid username");
-					} else {
-						return;
-					}
 					if (!document.getElementById("hcaptcha").firstChild.dataset.hcaptchaResponse) {
-						console.log("do captcha");
+						document.getElementById("title").innerText = "Failed to register";
+						document.getElementById("reason").innerText = "You have not done the CAPTCHA. Please complete the CAPTCHA before continuing.";
+						document.getElementById("popup").style.display = "flex";
 						return;
 					}
-					if (!/^((?=\S*?[A-Z])(?=\S*?[a-z])(?=\S*?[0-9]).{6,})\S$/.test(password)) {
-						alert("bad password");
+					if (username.length < 17 && username.length > 2 && !/[^a-zAZ0-9._-]/.test(username)) {
+					} else {
+						document.getElementById("title").innerText = "Failed to register";
+						document.getElementById("reason").innerText = "Your username is invalid. Please make your username within the limits described.";
+						document.getElementById("popup").style.display = "flex";
+						return;
+					}
+					if (!/^((?=\S*?[A-Z])(?=\S*?[a-z])(?=\S*?[0-9]).{5,})\S$/.test(password)) {
+						document.getElementById("title").innerText = "Failed to register";
+						document.getElementById("reason").innerText = "Your password is invalid. Please make your password within the limits described.";
+						document.getElementById("popup").style.display = "flex";
+						return;
 					}
 
 					let data = await (
@@ -63,12 +74,6 @@
 						document.getElementById("reason").innerText = data.reason;
 					}
 					document.getElementById("popup").style.display = "flex";
-					document.getElementById("close").addEventListener("click", () => {
-						document.getElementById("popup").style.display = "none";
-						if(document.getElementById("title").innerText == "Registered successfully") {
-							location.href = "/login"
-						}
-					});
 				});
 			});
 		</script>
@@ -86,15 +91,13 @@
 		</header>
 		<main id="main" class="noscroll">
 			<h2>Register a new account</h2>
-			<form action="" id="register">
-				<input type="text" id="username" placeholder="username" />
-				<p>3-16 characters<br />capital, lowercase, numbers, dash, underscore, and dots allowed</p>
-				<input type="text" id="password" placeholder="password" />
-				<p>6+ characters<br />one uppercase, lowercase, and number at least</p>
-				<div class="h-captcha" id="hcaptcha" data-sitekey="1774ec96-39be-4fb0-9e82-f4c62354b8fa"></div>
-				<p><a href="/login">Or login</a></p>
-				<button type="submit" value="Submit">Register</button>
-			</form>
+			<input type="text" id="username" placeholder="username" />
+			<p>3-16 characters<br />capital, lowercase, numbers, dash, underscore, and dots allowed</p>
+			<input type="password" id="password" placeholder="password" />
+			<p>6+ characters<br />one uppercase, lowercase, and number at least</p>
+			<div class="h-captcha" id="hcaptcha" data-sitekey="1774ec96-39be-4fb0-9e82-f4c62354b8fa"></div>
+			<p><a href="/login">Or login</a></p>
+			<button type="submit" value="Submit" id="register">Register</button>
 		</main>
 		<popups>
 			<div id="popup" style="display: none">

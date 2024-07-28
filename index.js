@@ -10,7 +10,7 @@ import compression from "compression";
 import { account_db } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import httpProxy from "http-proxy";
-import { generateAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
+import { removeAccount, generateAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { getGroqChatCompletion } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -201,6 +201,9 @@ app.use("/u/raw", async (req, res) => {
 	}
 });
 app.use("/u/:username", async (req, res) => {
+	if(["skysthelimit.dev", "skysthelimit", "selenite.cc", "selenite"].includes(req.params.username)) {
+		res.redirect("/u/sky");
+	}
 	res.send(await generateAccountPage(req.params.username, req.cookies.token));
 });
 
@@ -232,6 +235,14 @@ app.post("/api/profile/edit", async (req, res) => {
 
 app.post("/api/admin/badge", async (req, res) => {
 	let status = await addBadge(req.body.username, req.body.badge, req.cookies.token);
+	if (status["success"]) {
+		res.status(200).send(status);
+	} else {
+		res.status(400).send(status);
+	}
+});
+app.post("/api/admin/removeAcc", async (req, res) => {
+	let status = await removeAccount(req.body.username, req.cookies.token);
 	if (status["success"]) {
 		res.status(200).send(status);
 	} else {

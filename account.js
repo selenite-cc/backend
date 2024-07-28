@@ -346,6 +346,17 @@ async function addBadge(user, badge, cookie) {
 	return { success: false };
 }
 
+async function removeAccount(user, cookie) {
+	if(await isAdmin(cookie)) {
+		await account_db.destroy({
+			where: {
+				username: user
+			}
+		})
+		return true;
+	}
+}
+
 async function isAdmin(token) {
 	if (token) {
 		let user = JSON.parse(await decryptCookie(token))["n"];
@@ -464,4 +475,4 @@ function shitHitTheFan(msg) {
 	});
 }
 
-export { generateAccount, getUsers, getUserFromCookie, getRawData, retrieveData, saveData, createAccount, resetPassword, generateAccountPage, loginAccount, verifyCookie, editProfile, addBadge, isAdmin };
+export { removeAccount, generateAccount, getUsers, getUserFromCookie, getRawData, retrieveData, saveData, createAccount, resetPassword, generateAccountPage, loginAccount, verifyCookie, editProfile, addBadge, isAdmin };

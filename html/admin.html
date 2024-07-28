@@ -51,10 +51,23 @@
 				let announcement = prompt("enter announcement");
 				socket.send(`${key}.${announcement}`)
 			}
+			async function removeAccount() {
+				let name = prompt("enter username");
+				let run = await fetch("/api/admin/removeAcc", {
+					method: "POST",
+					body: JSON.stringify({
+						username: name
+					}),
+					headers: {
+						"Content-type": "application/json; charset=UTF-8",
+					},
+				});
+			}
 		</script>
 		<main>
 			<button onclick="addBadge()">Add a badge</button>
 			<button onclick="announce()">Send announcement</button>
+			<button onclick="removeAccount()">remove account</button>
 		</main>
 		<footer class="noscroll">
 			<a href="https://codeberg.org/skysthelimitt/selenite">Source</a>

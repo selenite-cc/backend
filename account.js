@@ -59,7 +59,7 @@ async function createAccount(name, pass, captcha) {
 			return { success: false, reason: "Captcha failed." };
 		}
 
-		const existingAccounts = await account_db.findOne({ where: { username: name } });
+		const existingAccounts = await account_db.findOne({ where: { username: name.toLowerCase() } });
 		if (existingAccounts !== null) {
 			return { success: false, reason: "The account already exists." };
 		}
@@ -72,8 +72,8 @@ async function createAccount(name, pass, captcha) {
 		const new_pass = crypto.createHash("sha256").update(salted_pass).digest("hex");
 		const hash_pass = JSON.stringify({ pass: new_pass, salt: salt });
 		let secret_key = rword.generate(6, { length: "3-7" }).join(" ").toUpperCase();
-		await account_db.create({ id: id, username: name, name: name, hashed_pass: hash_pass, secret_key: secret_key });
-		await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: name } });
+		await account_db.create({ id: id, username: name.toLowerCase(), name: name, hashed_pass: hash_pass, secret_key: secret_key });
+		await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: name.toLowerCase() } });
 
 		return { success: true, key: secret_key };
 	} catch (e) {
@@ -94,7 +94,7 @@ async function generateAccount() {
 	const new_pass = crypto.createHash("sha256").update(salted_pass).digest("hex");
 	const hash_pass = JSON.stringify({ pass: new_pass, salt: salt });
 	let secret_key = rword.generate(6, { length: "3-7" }).join(" ").toUpperCase();
-	await account_db.create({ id: id, username: name, name: name.toUpperCase(), hashed_pass: hash_pass, secret_key: secret_key, about: rword.generate(15, { length: "3-7" }).join(" "), pfp_url: "data/1721513763555645200/fa4ee75a-35dc-4ed5-b6d4-7239f0342c4e.webp" });
+	await account_db.create({ id: id, username: name.toLowerCase(), name: name.toUpperCase(), hashed_pass: hash_pass, secret_key: secret_key, about: rword.generate(15, { length: "3-7" }).join(" "), pfp_url: "data/1721513763555645200/fa4ee75a-35dc-4ed5-b6d4-7239f0342c4e.webp" });
 }
 
 async function resetPassword(name, key, pass, captcha) {
@@ -106,7 +106,7 @@ async function resetPassword(name, key, pass, captcha) {
 		return { success: false, reason: "Captcha failed." };
 	}
 	key = key.toUpperCase();
-	const existingAccount = await account_db.findOne({ where: { username: name } });
+	const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
 	if (existingAccount == null) {
 		return { success: false, reason: "The account does not exist." };
 	}
@@ -116,7 +116,7 @@ async function resetPassword(name, key, pass, captcha) {
 		const salted_pass = pass + salt;
 		const new_pass = crypto.createHash("sha256").update(salted_pass).digest("hex");
 		const hash_pass = JSON.stringify({ pass: new_pass, salt: salt });
-		await account_db.update({ hashed_pass: hash_pass }, { where: { username: name } });
+		await account_db.update({ hashed_pass: hash_pass }, { where: { username: name.toLowerCase() } });
 		return { success: true };
 	} else {
 		return { success: false, reason: "Wrong key" };
@@ -125,7 +125,7 @@ async function resetPassword(name, key, pass, captcha) {
 
 async function generateAccountPage(name, cookie) {
 	if (name) {
-		const existingAccount = await account_db.findOne({ where: { username: name } });
+		const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
 		if (existingAccount == null) {
 			return profile404;
 		}
@@ -150,7 +150,7 @@ async function generateAccountPage(name, cookie) {
 		return modifiedHTML;
 	} else if (cookie) {
 		name = await getUserFromCookie(cookie);
-		const existingAccount = await account_db.findOne({ where: { username: name } });
+		const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
 		if (existingAccount == null) {
 			return profile404;
 		}
@@ -177,7 +177,7 @@ async function generateAccountPage(name, cookie) {
 }
 
 async function loginAccount(name, pass, captcha) {
-	const existingAccounts = await account_db.findOne({ where: { username: name } });
+	const existingAccounts = await account_db.findOne({ where: { username: name.toLowerCase() } });
 	if (existingAccounts == null) {
 		return { success: false, reason: "The account doesn't exists." };
 	}
@@ -193,7 +193,7 @@ async function loginAccount(name, pass, captcha) {
 	const new_pass = crypto.createHash("sha256").update(salted_pass).digest("hex");
 
 	if (account_pass.pass == new_pass) {
-		await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: name } });
+		await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: name.toLowerCase() } });
 		return { success: true, token: await generateCookie(name, pass) };
 	} else {
 		return { success: false, reason: "Incorrect password." };
@@ -259,7 +259,7 @@ async function decryptCookie(cookie) {
 }
 
 async function isLoginValid(name, pass) {
-	const existingAccounts = await account_db.findOne({ where: { username: name } });
+	const existingAccounts = await account_db.findOne({ where: { username: name.toLowerCase() } });
 	if (existingAccounts == null) {
 		return false;
 	}
@@ -424,7 +424,7 @@ async function retrieveData(token) {
 
 async function getRawData(token) {
 	let name = await getUserFromCookie(token);
-	const existingAccounts = await account_db.findOne({ where: { username: name } });
+	const existingAccounts = await account_db.findOne({ where: { username: name.toLowerCase() } });
 	if (existingAccounts == null) {
 		return { success: false, reason: "The account doesn't exist." };
 	}

@@ -43,7 +43,7 @@ let profile404 = fs.readFileSync("./html/profile_404.html").toString();
 
 async function createAccount(name, pass, captcha) {
 	try {
-		if (!(name.length < 17 && name.length > 2 && !/[^a-zAZ0-9._-]/.test(name))) {
+		if (!(name.length < 17 && name.length > 2 && !/[^a-zA-Z0-9._-]/.test(name))) {
 			return { success: false, reason: "Bad username." };
 		}
 		if (!captcha) {

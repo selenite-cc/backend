@@ -37,7 +37,7 @@
 						document.getElementById("popup").style.display = "flex";
 						return;
 					}
-					if (username.length < 17 && username.length > 2 && !/[^a-zAZ0-9._-]/.test(username)) {
+					if (username.length < 17 && username.length > 2 && !/[^a-zA-Z0-9._-]/.test(username)) {
 					} else {
 						document.getElementById("title").innerText = "Failed to register";
 						document.getElementById("reason").innerText = "Your username is invalid. Please make your username within the limits described.";

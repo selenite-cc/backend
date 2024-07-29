@@ -18,9 +18,7 @@
 
 		<link rel="stylesheet" href="/style.css" />
 
-		<!-- seo + other things -->
-		 <style>{{ custom_css }}</style>
-		<title>{{ name }}'s Profile | Selenite</title>
+		<title>Banned Profile | Selenite</title>
 		<link rel="icon" href="/favicon.ico" />
 	</head>
 	<alerts> </alerts>
@@ -35,19 +33,7 @@
 			<a href="/u/" class="usericon"><img src="/img/user.svg" /></a>
 		</header>
 		<main>
-			<div class="profile top">
-				<img src="{{ user_pfp }}" class="pfp" />
-				<div class="profile top text">
-					<h1>{{ name }}</h1>
-					<div class="samerow">{{ badges }}</div>
-					<h2>Joined {{ join_date }}</h2>
-					<h2>Last online {{ online_time }}</h2>
-				</div>
-				<div class="profile top text right">
-					<h1>About Me</h1>
-					<h2 class="about">{{ about }}</h2>
-				</div>
-			</div>
+				<h2>You have been banned: {{ reason }}</h2>
 		</main>
 		<footer class="noscroll">
 			<a href="https://codeberg.org/skysthelimitt/selenite">Source</a>

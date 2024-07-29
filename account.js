@@ -40,6 +40,7 @@ let badge = {
 let rawProfileHTML = fs.readFileSync("./html/profile.html").toString();
 let rawEditProfileHTML = fs.readFileSync("./html/profile_edit.html").toString();
 let profile404 = fs.readFileSync("./html/profile_404.html").toString();
+let profileBan = fs.readFileSync("./html/profile_ban.html").toString();
 
 async function createAccount(name, pass, captcha) {
 	try {
@@ -126,7 +127,7 @@ async function resetPassword(name, key, pass, captcha) {
 async function generateAccountPage(name, cookie) {
 	if (name) {
 		const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
-		if (existingAccount == null) {
+		if (existingAccount == null || await isBanned(name.toLowerCase())) {
 			return profile404;
 		}
 
@@ -153,6 +154,11 @@ async function generateAccountPage(name, cookie) {
 		const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
 		if (existingAccount == null) {
 			return profile404;
+		}
+		if(await isBanned(name.toLowerCase())) {
+			let modified_ban = profileBan;
+			modified_ban = modified_ban.replaceAll("{{ reason }}", existingAccount.banned);
+			return modified_ban;
 		}
 		let modifiedHTML = rawEditProfileHTML;
 		modifiedHTML = modifiedHTML.replaceAll("{{ name }}", sanitizeHtml(existingAccount.name, sanitizeConfig));
@@ -452,6 +458,7 @@ async function getUsers(page, search) {
 			username: {
 				[Op.like]: `%${search}%`,
 			},
+			banned: null,
 		},
 	});
 
@@ -468,8 +475,27 @@ async function getUsers(page, search) {
 	return data;
 }
 
-async function banUser(user, token) {
-	
+async function banUser(name, reason, token) {
+	if(await isAdmin(token)) {
+		const existingAccount = await account_db.findOne({ where: { username: name } });
+		if (existingAccount == null) {
+			return { success: false, reason: "Does not exist" };
+		}
+		await account_db.update({ banned: reason }, { where: { username: name.toLowerCase() } });
+		return true;
+	}
+}
+
+async function isBanned(user) {
+	const existingAccount = await account_db.findOne({ where: { username: user } });
+	if (existingAccount == null) {
+		return false;
+	}
+	if(existingAccount.banned) {
+		console.log("returning ban")
+		return true;
+	}
+	return false;
 }
 
 function shitHitTheFan(msg) {
@@ -479,4 +505,4 @@ function shitHitTheFan(msg) {
 	});
 }
 
-export { removeAccount, generateAccount, getUsers, getUserFromCookie, getRawData, retrieveData, saveData, createAccount, resetPassword, generateAccountPage, loginAccount, verifyCookie, editProfile, addBadge, isAdmin };
+export { banUser, removeAccount, generateAccount, getUsers, getUserFromCookie, getRawData, retrieveData, saveData, createAccount, resetPassword, generateAccountPage, loginAccount, verifyCookie, editProfile, addBadge, isAdmin };

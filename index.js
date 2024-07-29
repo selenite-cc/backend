@@ -9,7 +9,7 @@ import mime from "mime-types";
 import compression from "compression";
 import { account_db } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
-import { removeAccount, generateAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
+import { banUser, removeAccount, generateAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { getGroqChatCompletion } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -238,6 +238,10 @@ app.post("/api/admin/badge", async (req, res) => {
 });
 app.post("/api/admin/removeAcc", async (req, res) => {
 	let status = await removeAccount(req.body.username, req.cookies.token);
+	res.status(200).send(status);
+});
+app.post("/api/admin/ban", async (req, res) => {
+	let status = await banUser(req.body.name, req.body.reason, req.cookies.token);
 	res.status(200).send(status);
 });
 

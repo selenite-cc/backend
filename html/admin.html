@@ -63,11 +63,26 @@
 					},
 				});
 			}
+			async function ban() {
+				let name = prompt("enter username");
+				let reason = prompt("enter reason");
+				let run = await fetch("/api/admin/ban", {
+					method: "POST",
+					body: JSON.stringify({
+						name: name,
+						reason: reason,
+					}),
+					headers: {
+						"Content-type": "application/json; charset=UTF-8",
+					},
+				});
+			}
 		</script>
 		<main>
 			<button onclick="addBadge()">Add a badge</button>
 			<button onclick="announce()">Send announcement</button>
 			<button onclick="removeAccount()">remove account</button>
+			<button onclick="ban()">ban account</button>
 		</main>
 		<footer class="noscroll">
 			<a href="https://codeberg.org/skysthelimitt/selenite">Source</a>

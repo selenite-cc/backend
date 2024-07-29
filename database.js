@@ -60,6 +60,10 @@ const account_db = sequelize.define("accounts", {
 		type: DataTypes.TEXT,
 		allowNull: true,
 	},
+	banned: {
+		type: DataTypes.TEXT,
+		allowNull: true,
+	},
 });
 sequelize.sync().then(() => {
     console.log(log.success("Database is online."));

@@ -413,6 +413,11 @@ async function retrieveData(token) {
 	}
 	let path = `${process.env.DATA_PATH}/data/${existingAccount.id}/save.dat`;
 	try {
+		await fs.access(path);
+	} catch {
+		return { success: false, reason: "No data was found." };
+	}
+	try {
 		let data = fs.readFileSync(path, "utf-8");
 		const iv = Buffer.from(data.split(".")[0], "base64");
 		data = data.split(".")[1];

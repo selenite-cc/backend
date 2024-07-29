@@ -93,6 +93,22 @@
 							mode: "cors",
 						})
 					).json();
+					document.getElementById("pfp_upload").style.display = "none";
+					document.getElementById("pfp_reminder").style.display = "none";
+					document.getElementById("body-text").style.display = "none";
+					document.getElementById("counter").style.display = "none";
+					document.getElementById("ai").style.display = "none";
+					document.getElementById("submit").style.display = "none";
+					if (data.success) {
+						document.getElementById("title").innerText = "Download successful!";
+						document.getElementById("text").style.display = "none";
+						document.getElementById("popup").style.display = "flex";
+					} else {
+						document.getElementById("title").innerText = "Download failed.";
+						document.getElementById("body-text").innerText = data.reason;
+						document.getElementById("body-text").style.display = "flex";
+						document.getElementById("popup").style.display = "flex";
+					}
 					console.log(data);
 					data = JSON.parse(data.data);
 					console.log(document.cookie);
@@ -109,21 +125,6 @@
 					console.log(localStorage);
 					for (let i = 0; i < storeNames.length; i++) {
 						localStorage.setItem(storeNames[i], storage[storeNames[i]]);
-					}
-					document.getElementById("pfp_upload").style.display = "none";
-					document.getElementById("pfp_reminder").style.display = "none";
-					document.getElementById("body-text").style.display = "none";
-					document.getElementById("counter").style.display = "none";
-					document.getElementById("ai").style.display = "none";
-					document.getElementById("submit").style.display = "none";
-					if (data.success) {
-						document.getElementById("title").innerText = "Download successful!";
-						document.getElementById("text").style.display = "none";
-						document.getElementById("popup").style.display = "flex";
-					} else {
-						document.getElementById("title").innerText = "Upload failed. This probably means something bad happened, send an email to support@selenite.cc or ping @skysthelimit.dev";
-						document.getElementById("text").style.display = "none";
-						document.getElementById("popup").style.display = "flex";
 					}
 				}
 				console.log("sending");

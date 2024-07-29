@@ -459,13 +459,17 @@ async function getUsers(page, search) {
 		data.rows[i] = {
 			username: sanitizeHtml(data.rows[i].username, sanitizeConfig),
 			name: sanitizeHtml(data.rows[i].name, sanitizeConfig),
-			about: (data.rows[i].about + "").length > 50 ? `${(sanitizeHtml(data.rows[i].about, sanitizeConfig) + "").substring(0, 50)}...` : sanitizeHtml(data.rows[i].about, sanitizeConfig),
+			about: (data.rows[i].about + "").length > 50 ? `${(sanitizeHtml(data.rows[i].about, allowNone) + "").substring(0, 50)}...` : sanitizeHtml(data.rows[i].about, allowNone),
 			badges: data.rows[i].badges,
 			pfp_url: data.rows[i].pfp_url || "/img/user.svg",
 		};
 	}
 
 	return data;
+}
+
+async function banUser(user, token) {
+	
 }
 
 function shitHitTheFan(msg) {

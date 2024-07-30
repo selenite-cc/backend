@@ -259,7 +259,7 @@
 		</script>
 	</head>
 	<alerts> </alerts>
-	<body id="noscroll">
+	<body>
 		<header>
 			<a href="/index.html">Home</a>
 			<a href="/bookmarklets.html">Bookmarklets</a>
@@ -299,6 +299,12 @@
 					<h2 id="about">{{ about }}</h2>
 				</div>
 			</div>
+			<div class="profile played">
+				<h2>Top Games:</h2>
+				<div id="played-games">
+					{{ played_games }}
+				</div>
+			</div>
 		</main>
 		<popups>
 			<div id="popup" style="display: none">
@@ -313,7 +319,7 @@
 				<button id="ai">✨</button>
 			</div>
 		</popups>
-		<footer class="noscroll">
+		<footer>
 			<a href="https://codeberg.org/skysthelimitt/selenite">Source</a>
 			<a href="https://discord.gg/7jyufnwJNf">Discord</a>
 			<a href="/suggest.html">Suggestions & Bugs</a>

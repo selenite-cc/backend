@@ -41,6 +41,17 @@ let rawProfileHTML = fs.readFileSync("./html/profile.html").toString();
 let rawEditProfileHTML = fs.readFileSync("./html/profile_edit.html").toString();
 let profile404 = fs.readFileSync("./html/profile_404.html").toString();
 let profileBan = fs.readFileSync("./html/profile_ban.html").toString();
+let gamesJSON = JSON.parse(fs.readFileSync("./selenite/data/games.json").toString());
+let appsJSON = JSON.parse(fs.readFileSync("./selenite/data/apps.json").toString());
+let profileReadyJSON = {};
+for(let i = 0; i < gamesJSON.length; i++) {
+	profileReadyJSON[gamesJSON[i].directory] = {"name": gamesJSON[i].name, "image": gamesJSON[i].image}
+}
+for(let i = 0; i < appsJSON.length; i++) {
+	profileReadyJSON[appsJSON[i].directory] = {"name": appsJSON[i].name, "image": appsJSON[i].image}
+}
+
+let gamesExceptions = {"win11": "11", "gba": "gba", "turbowarp": "turbowarp", "scratch1": "scratch1", "emulatorjs": "emu"};
 
 async function createAccount(name, pass, captcha) {
 	try {
@@ -112,6 +123,34 @@ async function resetPassword(name, key, pass, captcha) {
 	}
 }
 
+function buildGameHTML(existingAccount) {
+	if(existingAccount.playedgames) {
+		let games = JSON.parse(existingAccount.playedgames);
+		let sortedGames = (Object.keys(games)).sort((a, b) => games[b] - games[a]);
+		let return_data = [];
+		if(Object.keys(games).length < 10) {
+			for(let i = 0; i < sortedGames.length; i++) {
+				let origin = gamesExceptions[sortedGames[i]] ? "sppa" : "semag"
+				sortedGames[i] = gamesExceptions[sortedGames[i]] ? gamesExceptions[sortedGames[i]] : sortedGames[i];
+				return_data[i] = {"name": profileReadyJSON[sortedGames[i]].name, "image": profileReadyJSON[sortedGames[i]].image, "path": sortedGames[i], "origin": origin}
+			}
+		} else {
+			for(let i = 0; i < 10; i++) {
+				let origin = gamesExceptions[sortedGames[i]] ? "sppa" : "semag"
+				sortedGames[i] = (gamesExceptions[sortedGames[i]] ? gamesExceptions[sortedGames[i]] : sortedGames[i]);
+				return_data[i] = {"name": profileReadyJSON[sortedGames[i]].name, "image": profileReadyJSON[sortedGames[i]].image, "path": sortedGames[i], "origin": origin}
+			}
+		}
+		let return_html = "";
+		for(let i = 0; i < Object.keys(return_data).length; i++) {
+			return_html+=`<div class="played-game"><img src="/${return_data[i].origin}/${return_data[i].path}/${return_data[i].image}"/><p>${return_data[i].name}</p></div>`
+		}
+		return return_html;
+	} else {
+		return "<h3>Play some games</h3>"
+	}
+}
+
 async function generateAccountPage(name, cookie) {
 	if (name) {
 		const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
@@ -127,6 +166,7 @@ async function generateAccountPage(name, cookie) {
 		modifiedHTML = modifiedHTML.replaceAll("{{ user_pfp }}", existingAccount.pfp_url || "/img/user.svg");
 		modifiedHTML = modifiedHTML.replaceAll("{{ custom_css }}", existingAccount.custom_css || "");
 		modifiedHTML = modifiedHTML.replaceAll("{{ online_time }}", dayjs(existingAccount.last_login).fromNow());
+		modifiedHTML = modifiedHTML.replaceAll("{{ played_games }}", buildGameHTML(existingAccount));
 		let badges_html = "";
 
 		if (existingAccount.badges !== null) {
@@ -157,6 +197,7 @@ async function generateAccountPage(name, cookie) {
 		modifiedHTML = modifiedHTML.replaceAll("{{ url_gen }}", `https://selenite.cc/u/${existingAccount.username}`);
 		modifiedHTML = modifiedHTML.replaceAll("{{ online_time }}", dayjs(existingAccount.last_login).fromNow());
 		modifiedHTML = modifiedHTML.replaceAll("{{ css_edit }}", (existingAccount.badges ? existingAccount.badges.length : 0) > 0 ? '<img src="/img/edit.svg" id="edit" />' : "");
+		modifiedHTML = modifiedHTML.replaceAll("{{ played_games }}", buildGameHTML(existingAccount));
 		let badges_html = "";
 
 		if (existingAccount.badges !== null) {

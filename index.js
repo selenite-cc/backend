@@ -9,10 +9,12 @@ import mime from "mime-types";
 import compression from "compression";
 import { account_db } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
-import { banUser, removeAccount, generateAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
+import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { getGroqChatCompletion } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+import http from "http";
+import httpProxy from "http-proxy"
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -21,7 +23,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-let retarded_proxy = createProxyMiddleware({ target: 'https://ethereal.mov', ws: true });
+let retarded_proxy = createProxyMiddleware({ target: 'http://5.161.83.164:8081', ws: true, changeOrigin: true, });
 
 import WebSocket, { WebSocketServer } from "ws";
 const wss = new WebSocketServer({ noServer: true });
@@ -196,7 +198,7 @@ app.use("/u/raw", async (req, res) => {
 	}
 });
 app.use("/u/:username", async (req, res) => {
-	if (["skysthelimit.dev", "skysthelimit", "selenite.cc", "selenite", "owner", "admin"].includes(req.params.username)) {
+	if (["skysthelimit.dev", "selenite.cc", "selenite", "owner"].includes(req.params.username)) {
 		res.redirect("/u/sky");
 	}
 	res.send(await generateAccountPage(req.params.username, req.cookies.token));
@@ -251,12 +253,14 @@ const server = app.listen(port, () => {
 });
 server.on("upgrade", (request, socket, head) => {
 	if(request.url == "/mc") {
+		console.log("hit proxy");
 		retarded_proxy.upgrade(request, socket, head);
 	}
 	wss.handleUpgrade(request, socket, head, (socket) => {
 		wss.emit("connection", socket, request);
 	});
 });
+
 
 app.use(async (req, res) => {
 	res

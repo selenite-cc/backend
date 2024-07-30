@@ -85,18 +85,6 @@ async function createAccount(name, pass, captcha) {
 	}
 }
 
-async function generateAccount() {
-	let name = rword.generate(2, { length: "3-7" }).join("_").toLowerCase();
-	const id = `${Date.now()}${Math.round(Math.random() * 1000000)
-		.toString()
-		.padStart(6, 0)}`;
-	const salt = crypto.randomBytes(128).toString("base64");
-	const salted_pass = crypto.randomBytes(128).toString("base64") + salt;
-	const new_pass = crypto.createHash("sha256").update(salted_pass).digest("hex");
-	const hash_pass = JSON.stringify({ pass: new_pass, salt: salt });
-	let secret_key = rword.generate(6, { length: "3-7" }).join(" ").toUpperCase();
-	await account_db.create({ id: id, username: name.toLowerCase(), name: name.toUpperCase(), hashed_pass: hash_pass, secret_key: secret_key, about: rword.generate(15, { length: "3-7" }).join(" "), pfp_url: "data/1721513763555645200/fa4ee75a-35dc-4ed5-b6d4-7239f0342c4e.webp" });
-}
 
 async function resetPassword(name, key, pass, captcha) {
 	const response = await axios.post("https://api.hcaptcha.com/siteverify", `response=${captcha}&secret=${process.env.HCAPTCHA_SECRET}`);
@@ -510,4 +498,4 @@ function shitHitTheFan(msg) {
 	});
 }
 
-export { banUser, removeAccount, generateAccount, getUsers, getUserFromCookie, getRawData, retrieveData, saveData, createAccount, resetPassword, generateAccountPage, loginAccount, verifyCookie, editProfile, addBadge, isAdmin };
+export { banUser, removeAccount, getUsers, getUserFromCookie, getRawData, retrieveData, saveData, createAccount, resetPassword, generateAccountPage, loginAccount, verifyCookie, editProfile, addBadge, isAdmin };

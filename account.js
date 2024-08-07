@@ -147,7 +147,7 @@ function buildGameHTML(existingAccount) {
 		}
 		return return_html;
 	} else {
-		return "<h3>Play some games</h3>"
+		return "<h3>Play some games to view things appear here!</h3>"
 	}
 }
 

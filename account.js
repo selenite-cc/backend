@@ -532,6 +532,12 @@ async function isBanned(user) {
 	return false;
 }
 
+function getFriends(id) {
+	
+}
+
+
+
 function shitHitTheFan(msg) {
 	fetch("https://ntfy.sh/" + process.env.NTFY_ALERT, {
 		method: "POST",

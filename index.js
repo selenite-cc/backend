@@ -8,6 +8,7 @@ import path, { dirname } from "node:path";
 import mime from "mime-types";
 import compression from "compression";
 import { account_db } from "./database.js";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { getGroqChatCompletion } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +20,6 @@ app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
-
 
 import WebSocket, { WebSocketServer } from "ws";
 const wss = new WebSocketServer({ noServer: true });

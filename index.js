@@ -8,13 +8,10 @@ import path, { dirname } from "node:path";
 import mime from "mime-types";
 import compression from "compression";
 import { account_db } from "./database.js";
-import { createProxyMiddleware } from "http-proxy-middleware";
 import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { getGroqChatCompletion } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-import http from "http";
-import httpProxy from "http-proxy"
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -23,7 +20,6 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-let retarded_proxy = createProxyMiddleware({ target: 'http://5.161.83.164:8081', ws: true, changeOrigin: true, });
 
 import WebSocket, { WebSocketServer } from "ws";
 const wss = new WebSocketServer({ noServer: true });
@@ -252,10 +248,6 @@ const server = app.listen(port, () => {
 	console.log("- " + log.info("http://localhost:" + port));
 });
 server.on("upgrade", (request, socket, head) => {
-	if(request.url == "/mc") {
-		console.log("hit proxy");
-		retarded_proxy.upgrade(request, socket, head);
-	}
 	wss.handleUpgrade(request, socket, head, (socket) => {
 		wss.emit("connection", socket, request);
 	});

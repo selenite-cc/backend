@@ -4,7 +4,8 @@
   "description": "",
   "exports": "./index.js",
   "scripts": {
-    "start": "node --watch index.js"
+    "start": "node --watch index.js",
+    "svg": "node svg-converter.js"
   },
   "keywords": [],
   "author": "",
@@ -18,11 +19,13 @@
     "dayjs": "^1.11.11",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "fast-glob": "^3.3.2",
     "file-type": "^19.0.0",
     "groq-sdk": "^0.5.0",
     "http-proxy-middleware": "^3.0.0",
     "install": "^0.13.0",
     "mime-types": "^2.1.35",
+    "node-html-parser": "^6.1.13",
     "rword": "^3.2.1",
     "sanitize-html": "^2.13.0",
     "sequelize": "^6.37.3",

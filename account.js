@@ -44,14 +44,14 @@ let profileBan = fs.readFileSync("./html/profile_ban.html").toString();
 let gamesJSON = JSON.parse(fs.readFileSync("./selenite/data/games.json").toString());
 let appsJSON = JSON.parse(fs.readFileSync("./selenite/data/apps.json").toString());
 let profileReadyJSON = {};
-for(let i = 0; i < gamesJSON.length; i++) {
-	profileReadyJSON[gamesJSON[i].directory] = {"name": gamesJSON[i].name, "image": gamesJSON[i].image}
+for (let i = 0; i < gamesJSON.length; i++) {
+	profileReadyJSON[gamesJSON[i].directory] = { name: gamesJSON[i].name, image: gamesJSON[i].image };
 }
-for(let i = 0; i < appsJSON.length; i++) {
-	profileReadyJSON[appsJSON[i].directory] = {"name": appsJSON[i].name, "image": appsJSON[i].image}
+for (let i = 0; i < appsJSON.length; i++) {
+	profileReadyJSON[appsJSON[i].directory] = { name: appsJSON[i].name, image: appsJSON[i].image };
 }
 
-let gamesExceptions = {"win11": "11", "gba": "gba", "turbowarp": "turbowarp", "scratch1": "scratch1", "emulatorjs": "emu"};
+let gamesExceptions = { win11: "11", gba: "gba", turbowarp: "turbowarp", scratch1: "scratch1", emulatorjs: "emu" };
 
 async function createAccount(name, pass, captcha) {
 	try {
@@ -96,7 +96,6 @@ async function createAccount(name, pass, captcha) {
 	}
 }
 
-
 async function resetPassword(name, key, pass, captcha) {
 	const response = await axios.post("https://api.hcaptcha.com/siteverify", `response=${captcha}&secret=${process.env.HCAPTCHA_SECRET}`);
 
@@ -124,37 +123,47 @@ async function resetPassword(name, key, pass, captcha) {
 }
 
 function buildGameHTML(existingAccount) {
-	if(existingAccount.playedgames) {
+	if (existingAccount.playedgames) {
 		let games = JSON.parse(existingAccount.playedgames);
-		let sortedGames = (Object.keys(games)).sort((a, b) => games[b] - games[a]);
+		let sortedGames = Object.keys(games).sort((a, b) => games[b] - games[a]);
 		let return_data = [];
-		if(Object.keys(games).length < 10) {
-			for(let i = 0; i < sortedGames.length; i++) {
-				let origin = gamesExceptions[sortedGames[i]] ? "sppa" : "semag"
-				sortedGames[i] = gamesExceptions[sortedGames[i]] ? gamesExceptions[sortedGames[i]] : sortedGames[i];
-				return_data[i] = {"name": profileReadyJSON[sortedGames[i]].name, "image": profileReadyJSON[sortedGames[i]].image, "path": sortedGames[i], "origin": origin}
+		if (Object.keys(games).length < 10) {
+			for (let i = 0; i < sortedGames.length; i++) {
+				try {
+					let origin = gamesExceptions[sortedGames[i]] ? "sppa" : "semag";
+					sortedGames[i] = gamesExceptions[sortedGames[i]] ? gamesExceptions[sortedGames[i]] : sortedGames[i];
+					return_data[i] = { name: profileReadyJSON[sortedGames[i]].name, image: profileReadyJSON[sortedGames[i]].image, path: sortedGames[i], origin: origin, valid: true };
+				} catch (e) {
+					return_data[i] = { valid: false };
+				}
 			}
 		} else {
-			for(let i = 0; i < 10; i++) {
-				let origin = gamesExceptions[sortedGames[i]] ? "sppa" : "semag"
-				sortedGames[i] = (gamesExceptions[sortedGames[i]] ? gamesExceptions[sortedGames[i]] : sortedGames[i]);
-				return_data[i] = {"name": profileReadyJSON[sortedGames[i]].name, "image": profileReadyJSON[sortedGames[i]].image, "path": sortedGames[i], "origin": origin}
+			for (let i = 0; i < 10; i++) {
+				try {
+					let origin = gamesExceptions[sortedGames[i]] ? "sppa" : "semag";
+					sortedGames[i] = gamesExceptions[sortedGames[i]] ? gamesExceptions[sortedGames[i]] : sortedGames[i];
+					return_data[i] = { name: profileReadyJSON[sortedGames[i]].name, image: profileReadyJSON[sortedGames[i]].image, path: sortedGames[i], origin: origin, valid: true };
+				} catch (e) {
+					return_data[i] = { valid: false };
+				}
 			}
 		}
 		let return_html = "";
-		for(let i = 0; i < Object.keys(return_data).length; i++) {
-			return_html+=`<div class="played-game"><img src="/${return_data[i].origin}/${return_data[i].path}/${return_data[i].image}"/><p>${return_data[i].name}</p></div>`
+		for (let i = 0; i < Object.keys(return_data).length; i++) {
+			if (return_data[i].valid) {
+				return_html += `<div class="played-game"><img src="/${return_data[i].origin}/${return_data[i].path}/${return_data[i].image}"/><p>${return_data[i].name}</p></div>`;
+			}
 		}
 		return return_html;
 	} else {
-		return "<h3>Play some games to view things appear here!</h3>"
+		return "<h3>Play some games to view things appear here!</h3>";
 	}
 }
 
 async function generateAccountPage(name, cookie) {
 	if (name) {
 		const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
-		if (existingAccount == null || await isBanned(name.toLowerCase())) {
+		if (existingAccount == null || (await isBanned(name.toLowerCase()))) {
 			return profile404;
 		}
 
@@ -183,7 +192,7 @@ async function generateAccountPage(name, cookie) {
 		if (existingAccount == null) {
 			return profile404;
 		}
-		if(await isBanned(name.toLowerCase())) {
+		if (await isBanned(name.toLowerCase())) {
 			let modified_ban = profileBan;
 			modified_ban = modified_ban.replaceAll("{{ reason }}", existingAccount.banned);
 			return modified_ban;
@@ -382,12 +391,12 @@ async function addBadge(user, badge, cookie) {
 }
 
 async function removeAccount(user, cookie) {
-	if(await isAdmin(cookie)) {
+	if (await isAdmin(cookie)) {
 		await account_db.destroy({
 			where: {
-				username: user
-			}
-		})
+				username: user,
+			},
+		});
 		return true;
 	}
 }
@@ -457,7 +466,7 @@ async function retrieveData(token) {
 	} catch (err) {
 		console.error(err);
 		shitHitTheFan("Failure retrieving data, either database is messed up or something else.");
-		shitHitTheFan("User info: " + user + ", " + path)
+		shitHitTheFan("User info: " + user + ", " + path);
 	}
 	return { success: false, reason: "Anonymous error" };
 }
@@ -510,7 +519,7 @@ async function getUsers(page, search) {
 }
 
 async function banUser(name, reason, token) {
-	if(await isAdmin(token)) {
+	if (await isAdmin(token)) {
 		const existingAccount = await account_db.findOne({ where: { username: name } });
 		if (existingAccount == null) {
 			return { success: false, reason: "Does not exist" };
@@ -525,18 +534,14 @@ async function isBanned(user) {
 	if (existingAccount == null) {
 		return false;
 	}
-	if(existingAccount.banned) {
-		console.log("returning ban")
+	if (existingAccount.banned) {
+		console.log("returning ban");
 		return true;
 	}
 	return false;
 }
 
-function getFriends(id) {
-	
-}
-
-
+function getFriends(id) {}
 
 function shitHitTheFan(msg) {
 	fetch("https://ntfy.sh/" + process.env.NTFY_ALERT, {

@@ -193,9 +193,17 @@ app.use("/u/raw", async (req, res) => {
 		res.redirect("/login");
 	}
 });
+app.use("/u/:username/edit", async (req, res, next) => {
+	if(await isAdmin(req.cookies.token)) {
+		res.send(await generateAccountPage(req.params.username, req.cookies.token, true));
+		return;
+	}
+	next();
+});
 app.use("/u/:username", async (req, res) => {
 	if (["skysthelimit.dev", "selenite.cc", "selenite", "owner"].includes(req.params.username)) {
 		res.redirect("/u/sky");
+		return;
 	}
 	res.send(await generateAccountPage(req.params.username, req.cookies.token));
 });
@@ -218,7 +226,7 @@ app.post("/api/account/reset", async (req, res) => {
 });
 
 app.post("/api/profile/edit", async (req, res) => {
-	let status = await editProfile(req.body, req.cookies.token);
+	let status = await editProfile(req.body, req.cookies.token, false);
 	if (status["success"]) {
 		res.status(200).send(status);
 	} else {
@@ -236,6 +244,10 @@ app.post("/api/admin/badge", async (req, res) => {
 });
 app.post("/api/admin/removeAcc", async (req, res) => {
 	let status = await removeAccount(req.body.username, req.cookies.token);
+	res.status(200).send(status);
+});
+app.post("/api/admin/removeAcc", async (req, res) => {
+	let status = await editProfile(req.body, req.cookies.token, true);
 	res.status(200).send(status);
 });
 app.post("/api/admin/ban", async (req, res) => {

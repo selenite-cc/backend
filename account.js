@@ -17,6 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import sanitizeHtml from "sanitize-html";
+import { isatty } from "node:tty";
 const sanitizeConfig = {
 	allowedTags: ["b", "i", "em", "strong", "a"],
 	allowedAttributes: {
@@ -160,8 +161,12 @@ function buildGameHTML(existingAccount) {
 	}
 }
 
-async function generateAccountPage(name, cookie) {
-	if (name) {
+async function generateAccountPage(name, cookie, admin) {
+	let userIsAdmin = false;
+	if(admin) {
+		userIsAdmin = await isAdmin(cookie);
+	}
+	if (name && !admin) {
 		const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
 		if (existingAccount == null || (await isBanned(name.toLowerCase()))) {
 			return profile404;
@@ -186,8 +191,8 @@ async function generateAccountPage(name, cookie) {
 		}
 		modifiedHTML = modifiedHTML.replaceAll("{{ badges }}", badges_html);
 		return modifiedHTML;
-	} else if (cookie) {
-		name = await getUserFromCookie(cookie);
+	} else if (cookie || userIsAdmin) {
+		name = userIsAdmin ? name : await getUserFromCookie(cookie);
 		const existingAccount = await account_db.findOne({ where: { username: name.toLowerCase() } });
 		if (existingAccount == null) {
 			return profile404;
@@ -199,6 +204,7 @@ async function generateAccountPage(name, cookie) {
 		}
 		let modifiedHTML = rawEditProfileHTML;
 		modifiedHTML = modifiedHTML.replaceAll("{{ name }}", sanitizeHtml(existingAccount.name, sanitizeConfig));
+		modifiedHTML = modifiedHTML.replaceAll("{{ username }}", existingAccount.username);
 		modifiedHTML = modifiedHTML.replaceAll("{{ join_date }}", dayjs(existingAccount.createdAt).fromNow());
 		modifiedHTML = modifiedHTML.replaceAll("{{ about }}", sanitizeHtml(existingAccount.about, sanitizeConfig) || "No about me available..");
 		modifiedHTML = modifiedHTML.replaceAll("{{ user_pfp }}", existingAccount.pfp_url || "/img/user.svg");
@@ -255,7 +261,6 @@ async function generateCookie(name, pass) {
 	const cipher = crypto.createCipheriv("aes-256-cbc", secretKey, iv);
 	let encrypted = cipher.update(unencryptedCookie, "utf8", "base64");
 	encrypted += cipher.final("base64");
-	console.log("cookie", encrypted);
 
 	const encryptedCookie = (iv.toString("base64") + "." + encrypted).replaceAll("=", "");
 	return encryptedCookie;
@@ -314,9 +319,13 @@ async function isLoginValid(name, pass) {
 	return existingAccounts && account_pass.pass == new_pass;
 }
 
-async function editProfile(body, token) {
-	if (await verifyCookie(token)) {
-		let user = await getUserFromCookie(token);
+async function editProfile(body, token, admin) {
+	let userIsAdmin = false;
+	if(admin) {
+		userIsAdmin = await isAdmin(token);
+	}
+	if (await verifyCookie(token) || userIsAdmin) {
+		let user = userIsAdmin ? await getUserFromCookie(token) : body.username;
 
 		const existingAccount = await account_db.findOne({ where: { username: user } });
 		if (existingAccount == null) {
@@ -535,7 +544,6 @@ async function isBanned(user) {
 		return false;
 	}
 	if (existingAccount.banned) {
-		console.log("returning ban");
 		return true;
 	}
 	return false;
@@ -544,6 +552,7 @@ async function isBanned(user) {
 function getFriends(id) {}
 
 function shitHitTheFan(msg) {
+	console.error("smth bad, ", msg);
 	fetch("https://ntfy.sh/" + process.env.NTFY_ALERT, {
 		method: "POST",
 		body: msg,

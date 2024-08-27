@@ -34,6 +34,7 @@
 			}
 			let currentState;
 			async function setProfile() {
+				console.log(state);
 				let body;
 				if (state == "name") {
 					body = { name: document.getElementById("text").value };
@@ -52,6 +53,8 @@
 					console.log("promise finished");
 					body = { pfp: fileData };
 					console.log("body set");
+				} else if (state == "clearpfp") {
+					body = { pfp: "del" };
 				} else if (state == "close") {
 					return;
 				} else if (state == "upload") {
@@ -151,6 +154,7 @@
 					}
 				});
 				document.getElementById("submit").addEventListener("click", await setProfile);
+				document.getElementById("clear").addEventListener("click", async()=>{state="clearpfp";await setProfile()});
 				document.getElementById("ai").addEventListener("click", async () => {
 					let data = prompt("what do you want?");
 					let response = await (
@@ -177,6 +181,7 @@
 							document.getElementById("pfp_upload").style.display = "none";
 							document.getElementById("pfp_reminder").style.display = "none";
 							document.getElementById("body-text").style.display = "none";
+							document.getElementById("clear").style.display = "none";
 							document.getElementById("text").style.display = "flex";
 							document.getElementById("text").value = userData["name"];
 							document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
@@ -190,6 +195,7 @@
 							document.getElementById("pfp_upload").style.display = "none";
 							document.getElementById("pfp_reminder").style.display = "none";
 							document.getElementById("body-text").style.display = "none";
+							document.getElementById("clear").style.display = "none";
 							document.getElementById("text").style.display = "flex";
 							document.getElementById("text").value = userData["about"];
 							document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
@@ -204,6 +210,7 @@
 							document.getElementById("pfp_upload").style.display = "none";
 							document.getElementById("pfp_reminder").style.display = "none";
 							document.getElementById("body-text").style.display = "none";
+							document.getElementById("clear").style.display = "none";
 							document.getElementById("text").style.display = "flex";
 							document.getElementById("text").value = userData["css"];
 							document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
@@ -217,6 +224,7 @@
 							document.getElementById("pfp_upload").style.display = "flex";
 							document.getElementById("pfp_reminder").style.display = "flex";
 							document.getElementById("body-text").style.display = "none";
+							document.getElementById("clear").style.display = "flex";
 							document.getElementById("text").style.display = "none";
 							document.getElementById("counter").style.display = "none";
 							document.getElementById("ai").style.display = "none";
@@ -317,6 +325,7 @@
 				<p id="counter">0 / 0</p>
 				<input type="file" id="pfp_upload" name="filename" accept=".png,.jpg,.jpeg,.gif,.avif,.webp,.tiff,.svg" />
 				<p id="pfp_reminder">4 MB file upload max</p>
+				<button id="clear">Clear Profile Picture</button>
 				<button id="submit">Submit</button>
 				<button id="close">X</button>
 				<button id="ai">✨</button>

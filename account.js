@@ -325,6 +325,7 @@ async function editProfile(body, token, admin) {
 		userIsAdmin = await isAdmin(token);
 	}
 	if (await verifyCookie(token) || userIsAdmin) {
+		console.log(body.pfp);
 		let user = userIsAdmin ? await getUserFromCookie(token) : body.username;
 
 		const existingAccount = await account_db.findOne({ where: { username: user } });
@@ -348,6 +349,11 @@ async function editProfile(body, token, admin) {
 			await account_db.update({ custom_css: sanitizeHtml(body.custom, sanitizeConfig) }, { where: { username: user } });
 		}
 		if (body.pfp) {
+			console.log("hit body pfp");
+			if(body.pfp == "del") {
+				await account_db.update({ pfp_url: null }, { where: { username: user } });
+				return { success: true };
+			}
 			const { fileTypeFromBuffer } = await import("file-type");
 			let base64Data = body.pfp.split(";base64,").pop();
 			let pfp = Buffer.from(base64Data, "base64");

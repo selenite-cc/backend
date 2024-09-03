@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { rateLimit } from 'express-rate-limit'
 import { log } from "./log.js";
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -10,11 +11,20 @@ import compression from "compression";
 import { account_db } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
-import { getGroqChatCompletion } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const port = process.env.PORT || 3000;
+
+const limiter = rateLimit({
+	windowMs: 5 * 60 * 1000,
+	limit: 200,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	message: "Your IP has sent too many requests, please wait up to 5 minutes to continue. Note: This only blocks pages such as profiles. You may use the rest of the website as normal."
+})
+
+
 const app = express();
 app.use(compression());
 app.use(cookieParser());
@@ -69,7 +79,8 @@ wss.on("connection", function connection(ws, req, res) {
 
 	ws.on("close", () => {});
 });
-
+app.use("/api", limiter);
+app.use("/u", limiter)
 app.post(
 	"/api/event",
 	createProxyMiddleware({
@@ -77,7 +88,12 @@ app.post(
 		changeOrigin: true,
 	})
 );
-app.post("/register", async (req, res) => {
+// app.use("*.json", async (req, res, next) => {
+//	optimize json
+// 	console.log("got data");
+// 	next()
+// });
+app.post("/register", limiter, async (req, res) => {
 	let status = await createAccount(req.body.username, req.body.password, req.body["h-captcha-response"]);
 	if (status["success"]) {
 		res.status(200).send(status);
@@ -86,7 +102,7 @@ app.post("/register", async (req, res) => {
 	}
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", limiter, async (req, res) => {
 	let status = await loginAccount(req.body.username, req.body.password, req.body["h-captcha-response"]);
 	if (status["success"]) {
 		res.status(200).send(status);
@@ -94,9 +110,9 @@ app.post("/login", async (req, res) => {
 		res.status(400).send(status);
 	}
 });
-app.post("/groq", async (req, res) => {
-	res.send((await getGroqChatCompletion(req.body.msg)).choices[0]?.message?.content || "");
-});
+// app.post("/groq", async (req, res) => {
+// 	res.send((await getGroqChatCompletion(req.body.msg)).choices[0]?.message?.content || "");
+// });
 app.use(["/register", "/login"], async (req, res, next) => {
 	console.log;
 	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
@@ -131,10 +147,6 @@ app.post("/api/account/upload", async (req, res, next) => {
 	} else {
 		return "KILL YOURSELF";
 	}
-});
-app.use("/api/generateAccount", async (req, res, next) => {
-	generateAccount();
-	res.send(200);
 });
 app.use("/api/account/load", async (req, res, next) => {
 	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {

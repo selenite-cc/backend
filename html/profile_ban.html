@@ -20,6 +20,17 @@
 
 		<title>Banned Profile | Selenite</title>
 		<link rel="icon" href="/favicon.ico" />
+		<script>
+			function delete_cookie(name, path, domain) {
+				document.cookie = name + "=" + (path ? ";path=" + path : "") + (domain ? ";domain=" + domain : "") + ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
+			}
+			document.addEventListener("DOMContentLoaded", () => {
+				document.getElementById("logout").addEventListener("click", () => {
+					delete_cookie("token", "/", location.hostname);
+					location.reload();
+				});
+			});
+		</script>
 	</head>
 	<alerts> </alerts>
 	<body id="noscroll" class="profile">
@@ -33,7 +44,8 @@
 			<a href="/u/" class="usericon"><img src="/img/user.svg" /></a>
 		</header>
 		<main>
-				<h2>You have been banned: {{ reason }}</h2>
+			<h2>You have been banned: {{ reason }}</h2>
+			<button id="logout">Log out</button>
 		</main>
 		<footer class="noscroll">
 			<a href="https://gitlab.com/skysthelimit.dev/selenite">Source</a>

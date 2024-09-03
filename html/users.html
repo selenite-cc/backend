@@ -21,7 +21,9 @@
 		<link rel="icon" href="/favicon.ico" />
 		<script>
 			async function loadUsers(query, page) {
-				let data = await (await fetch(`/api/getUsers?page=${page-1}&query=${query}`)).json();
+				let above = false;
+				let below = false;
+				let data = await (await fetch(`/api/getUsers?page=${page - 1}&query=${query}`)).json();
 				let users = data.rows;
 				let url = new URL(location.href);
 
@@ -31,14 +33,40 @@
 					document.getElementById("users").innerHTML += `<a href="/u/${users[i].username}" class="users"><img class="pfp" src="${users[i].pfp_url}"/><div class="user_info"><h1>${users[i].name}</h1><p>${users[i].about}</p></div></a>`;
 				}
 				document.getElementById("pages").innerHTML = "";
-				for (let i = 1; i < pages+1; i++) {
+				for (let i = 1; i < pages + 1; i++) {
+					if (i + 6 > page && i - 6 < page) {
+						let curPage = parseInt(page);
+						console.log(curPage)
+						console.log(i, page);
+						let element = document.createElement("a");
+						if (!(i == curPage)) {
+							url.searchParams.set("page", i);
+							element.setAttribute("href", url);
+						}
+						element.setAttribute("class", `pages-btn`);
+						element.innerText = i;
+						document.getElementById("pages").append(element);
+						console.log(element);
+					} else {
+						if (i + 6 > page) {
+							above = true;
+						}
+						if (i - 6 < page) {
+							below = true;
+						}
+					}
+				}
+				if (above) {
 					let element = document.createElement("a");
 					element.setAttribute("class", "pages-btn");
-					url.searchParams.set("page", i);
-					element.setAttribute("href", url);
-					element.innerText = i;
+					element.innerText = "...";
 					document.getElementById("pages").append(element);
-					console.log(element);
+				}
+				if (below) {
+					let element = document.createElement("a");
+					element.setAttribute("class", "pages-btn");
+					element.innerText = "...";
+					document.getElementById("pages").prepend(element);
 				}
 			}
 			let pages;
@@ -46,14 +74,14 @@
 				let params = location.search.substring(1).split("&");
 				let query;
 				let page;
-				if(params) {
-					for(let i = 0;i<params.length;i++) {
-						if(params[i].startsWith("query")) {
+				if (params) {
+					for (let i = 0; i < params.length; i++) {
+						if (params[i].startsWith("query")) {
 							query = params[i].substring(6);
 						}
-						if(params[i].startsWith("page")) {
+						if (params[i].startsWith("page")) {
 							page = params[i].substring(5);
-							if(isNaN(page)) {
+							if (isNaN(page)) {
 								page = 1;
 							}
 						}
@@ -64,6 +92,7 @@
 					if (e.key == "Enter") {
 						let url = new URL(location.href);
 						url.searchParams.set("query", document.getElementById("search").value);
+						url.searchParams.set("page", 1);
 						location.href = url;
 					}
 				});

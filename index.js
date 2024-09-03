@@ -17,11 +17,11 @@ const __dirname = dirname(__filename);
 const port = process.env.PORT || 3000;
 
 const limiter = rateLimit({
-	windowMs: 5 * 60 * 1000,
-	limit: 200,
+	windowMs: 1 * 60 * 1000,
+	limit: 75,
 	standardHeaders: 'draft-7',
 	legacyHeaders: false,
-	message: "Your IP has sent too many requests, please wait up to 5 minutes to continue. Note: This only blocks pages such as profiles. You may use the rest of the website as normal."
+	message: "Your IP has sent too many requests, please wait up to a minute to continue. Note: This only blocks pages such as profiles. You may use the rest of the website as normal."
 })
 
 

@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { rateLimit } from 'express-rate-limit'
 import { log } from "./log.js";
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -15,14 +14,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const port = process.env.PORT || 3000;
-
-const limiter = rateLimit({
-	windowMs: 1 * 60 * 1000,
-	limit: 75,
-	standardHeaders: 'draft-7',
-	legacyHeaders: false,
-	message: "Your IP has sent too many requests, please wait up to a minute to continue. Note: This only blocks pages such as profiles. You may use the rest of the website as normal."
-})
 
 
 const app = express();
@@ -79,8 +70,6 @@ wss.on("connection", function connection(ws, req, res) {
 
 	ws.on("close", () => {});
 });
-app.use("/api", limiter);
-app.use("/u", limiter)
 app.post(
 	"/api/event",
 	createProxyMiddleware({

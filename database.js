@@ -2,13 +2,13 @@ import "dotenv/config";
 import { log } from "./log.js";
 import { Sequelize, DataTypes, Op } from "sequelize";
 
-const sequelize = new Sequelize({
+const accs_sequelize = new Sequelize({
 	logging: msg => console.log(log.info(msg)),
 	dialect: "sqlite",
 	storage: `${process.env.DATA_PATH}/accounts.sqlite`,
 });
 
-const account_db = sequelize.define("accounts", {
+const account_db = accs_sequelize.define("accounts", {
 	id: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
@@ -65,11 +65,40 @@ const account_db = sequelize.define("accounts", {
 		allowNull: true,
 	},
 });
-sequelize.sync().then(() => {
-    console.log(log.success("Database is online."));
+
+const infi_sequelize = new Sequelize({
+	logging: msg => console.log(log.info(msg)),
+	dialect: "sqlite",
+	storage: `${process.env.DATA_PATH}/infinitecraft.sqlite`,
+});
+
+const infiniteCache = infi_sequelize.define("caches", {
+	1: {
+		type: DataTypes.TEXT,
+	},
+	2: {
+		type: DataTypes.TEXT,
+	},
+	result_item: {
+		type: DataTypes.TEXT,
+	},
+	result_emoji: {
+		type: DataTypes.TEXT,
+	},
+});
+
+infi_sequelize.sync().then(() => {
+    console.log(log.success("Infinite Craft cache is online."));
 }).catch((error) => {
-    console.error(log.error("Failed to synchronize database:"));
+    console.error(log.error("Failed to synchronize Infinite Craft database:"));
 	console.error(log.error(error));
 });
 
-export { sequelize, account_db };
+accs_sequelize.sync().then(() => {
+    console.log(log.success("Accounts Database is online."));
+}).catch((error) => {
+    console.error(log.error("Failed to synchronize accs database:"));
+	console.error(log.error(error));
+});
+
+export { accs_sequelize, infi_sequelize, account_db, infiniteCache };

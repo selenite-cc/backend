@@ -7,9 +7,10 @@ import { fileURLToPath } from "url";
 import path, { dirname } from "node:path";
 import mime from "mime-types";
 import compression from "compression";
-import { account_db } from "./database.js";
+import { account_db, infiniteCache } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
+import { infiniteCraft } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -82,7 +83,7 @@ app.post(
 // 	console.log("got data");
 // 	next()
 // });
-app.post("/register", limiter, async (req, res) => {
+app.post("/register", async (req, res) => {
 	let status = await createAccount(req.body.username, req.body.password, req.body["h-captcha-response"]);
 	if (status["success"]) {
 		res.status(200).send(status);
@@ -91,7 +92,7 @@ app.post("/register", limiter, async (req, res) => {
 	}
 });
 
-app.post("/login", limiter, async (req, res) => {
+app.post("/login", async (req, res) => {
 	let status = await loginAccount(req.body.username, req.body.password, req.body["h-captcha-response"]);
 	if (status["success"]) {
 		res.status(200).send(status);
@@ -99,11 +100,7 @@ app.post("/login", limiter, async (req, res) => {
 		res.status(400).send(status);
 	}
 });
-// app.post("/groq", async (req, res) => {
-// 	res.send((await getGroqChatCompletion(req.body.msg)).choices[0]?.message?.content || "");
-// });
 app.use(["/register", "/login"], async (req, res, next) => {
-	console.log;
 	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		res.redirect("/u/");
 	} else {
@@ -135,6 +132,38 @@ app.post("/api/account/upload", async (req, res, next) => {
 		}
 	} else {
 		return "KILL YOURSELF";
+	}
+});
+app.get("/api/infinite/get", async (req, res, next) => {
+	if(req.query[1] && req.query[2]) {
+		let success = false;
+		let data;
+		let search1 = await infiniteCache.findOne({where: {1: req.query[1],2: req.query[2]}});
+		if (search1 !== null) {
+			data = {"item": search1.result_item, "emoji": search1.result_emoji, "new": false};
+			success = true;
+		}
+		let search2 = await infiniteCache.findOne({where: {1: req.query[2],2: req.query[1]}});
+		if (search2 !== null) {
+			data = {"item": search2.result_item, "emoji": search2.result_emoji, "new": false};
+			success = true;
+		}
+		while(!success) {
+			data = await infiniteCraft(req.query[1], req.query[2]);
+			try {
+				let parse = JSON.parse(data);
+				let keys = Object.keys(parse);
+				if(keys.indexOf("item") > -1 && keys.indexOf("emoji") > -1) {
+					success = true;
+					parse.new = true;
+					data = parse;
+					infiniteCache.create({1: req.query[1],2: req.query[2], result_item:data.item, result_emoji:data.emoji})
+				}
+			} catch {
+				continue;
+			}
+		}
+		res.send(data);
 	}
 });
 app.use("/api/account/load", async (req, res, next) => {

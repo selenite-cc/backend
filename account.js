@@ -17,7 +17,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import sanitizeHtml from "sanitize-html";
-import { isatty } from "node:tty";
 const sanitizeConfig = {
 	allowedTags: ["b", "i", "em", "strong", "a"],
 	allowedAttributes: {

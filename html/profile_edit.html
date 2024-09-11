@@ -74,7 +74,6 @@
 					document.getElementById("pfp_reminder").style.display = "none";
 					document.getElementById("body-text").style.display = "none";
 					document.getElementById("counter").style.display = "none";
-					document.getElementById("ai").style.display = "none";
 					document.getElementById("submit").style.display = "none";
 					if (data.success) {
 						document.getElementById("title").innerText = "Upload successful!";
@@ -101,7 +100,6 @@
 					document.getElementById("pfp_reminder").style.display = "none";
 					document.getElementById("body-text").style.display = "none";
 					document.getElementById("counter").style.display = "none";
-					document.getElementById("ai").style.display = "none";
 					document.getElementById("submit").style.display = "none";
 					if (data.success) {
 						document.getElementById("title").innerText = "Download successful!";
@@ -200,7 +198,6 @@
 							document.getElementById("text").value = userData["about"];
 							document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
 							document.getElementById("counter").style.display = "flex";
-							document.getElementById("ai").style.display = "none";
 							document.getElementById("submit").style.display = "flex";
 							document.getElementById("popup").style.display = "flex";
 						} else if (e.target.parentElement.children[0].id == "custom") {
@@ -215,7 +212,6 @@
 							document.getElementById("text").value = userData["css"];
 							document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
 							document.getElementById("counter").style.display = "flex";
-							document.getElementById("ai").style.display = "flex";
 							document.getElementById("submit").style.display = "flex";
 							document.getElementById("popup").style.display = "flex";
 						} else if (e.target.parentElement.children[0].id == "pfp") {
@@ -227,7 +223,6 @@
 							document.getElementById("clear").style.display = "flex";
 							document.getElementById("text").style.display = "none";
 							document.getElementById("counter").style.display = "none";
-							document.getElementById("ai").style.display = "none";
 							document.getElementById("submit").style.display = "flex";
 							document.getElementById("popup").style.display = "flex";
 						}
@@ -247,8 +242,8 @@
 					document.getElementById("body-text").style.display = "flex";
 					document.getElementById("body-text").innerText = "This will overwrite any data you may have saved in the cloud. Click Submit to continue, or X to stop.";
 					document.getElementById("text").style.display = "none";
+					document.getElementById("clear").style.display = "none";
 					document.getElementById("counter").style.display = "none";
-					document.getElementById("ai").style.display = "none";
 					document.getElementById("submit").style.display = "flex";
 					document.getElementById("popup").style.display = "flex";
 				});
@@ -260,8 +255,8 @@
 					document.getElementById("body-text").style.display = "flex";
 					document.getElementById("body-text").innerText = "This will overwrite any data you may have saved locally. Click Submit to continue, or X to stop.";
 					document.getElementById("text").style.display = "none";
+					document.getElementById("clear").style.display = "none";
 					document.getElementById("counter").style.display = "none";
-					document.getElementById("ai").style.display = "none";
 					document.getElementById("submit").style.display = "flex";
 					document.getElementById("popup").style.display = "flex";
 				});
@@ -328,7 +323,6 @@
 				<button id="clear">Clear Profile Picture</button>
 				<button id="submit">Submit</button>
 				<button id="close">X</button>
-				<button id="ai">✨</button>
 			</div>
 		</popups>
 		<footer>

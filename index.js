@@ -74,7 +74,7 @@ wss.on("connection", function connection(ws, req, res) {
 app.post(
 	"/api/event",
 	createProxyMiddleware({
-		target: "https://plausible.selenite.cc",
+		target: "http://plausible.selenite.cc",
 		changeOrigin: true,
 	})
 );

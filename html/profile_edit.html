@@ -153,22 +153,6 @@
 				});
 				document.getElementById("submit").addEventListener("click", await setProfile);
 				document.getElementById("clear").addEventListener("click", async()=>{state="clearpfp";await setProfile()});
-				document.getElementById("ai").addEventListener("click", async () => {
-					let data = prompt("what do you want?");
-					let response = await (
-						await fetch("/groq", {
-							credentials: "include",
-							headers: {
-								"Content-type": "application/json; charset=UTF-8",
-							},
-							body: JSON.stringify({ msg: data }),
-							method: "POST",
-							mode: "cors",
-						})
-					).text();
-					document.getElementById("text").value = response.replace("`", "");
-					document.getElementById("counter").innerText = `${document.getElementById("text").value.length} / ${document.getElementById("text").attributes.maxlength.value}`;
-				});
 				document.querySelectorAll("#edit").forEach((element) => {
 					element.addEventListener("click", (e) => {
 						console.log(e.target.parentElement.children[0].id);

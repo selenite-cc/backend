@@ -24,6 +24,10 @@ const sanitizeConfig = {
 	},
 	disallowedTagsMode: "escape",
 };
+const sanitizeConfigNoLink = {
+	allowedTags: ["b", "i", "em", "strong"],
+	disallowedTagsMode: "escape",
+};
 const allowNone = {
 	allowedTags: [],
 	allowedAttributes: {},
@@ -336,16 +340,16 @@ async function editProfile(body, token, admin) {
 			if (body.name.length > 20) {
 				return { success: false, reason: "Length too long." };
 			}
-			await account_db.update({ name: sanitizeHtml(body.name, sanitizeConfig) }, { where: { username: user } });
+			await account_db.update({ name: body.name }, { where: { username: user } });
 		}
 		if (body.about) {
 			if (body.about.length > 200) {
 				return { success: false, reason: "Length too long." };
 			}
-			await account_db.update({ about: sanitizeHtml(body.about, sanitizeConfig) }, { where: { username: user } });
+			await account_db.update({ about: body.about }, { where: { username: user } });
 		}
 		if (body.custom) {
-			await account_db.update({ custom_css: sanitizeHtml(body.custom, sanitizeConfig) }, { where: { username: user } });
+			await account_db.update({ custom_css: body.custom }, { where: { username: user } });
 		}
 		if (body.pfp) {
 			console.log("hit body pfp");
@@ -523,7 +527,7 @@ async function getUsers(page, search) {
 		data.rows[i] = {
 			username: sanitizeHtml(data.rows[i].username, sanitizeConfig),
 			name: sanitizeHtml(data.rows[i].name, sanitizeConfig),
-			about: (data.rows[i].about + "").length > 50 ? `${(sanitizeHtml(data.rows[i].about, allowNone) + "").substring(0, 50)}...` : sanitizeHtml(data.rows[i].about, allowNone),
+			about: (data.rows[i].about + "").length > 50 ? `${(sanitizeHtml(data.rows[i].about, sanitizeConfigNoLink) + "").substring(0, 50)}...` : sanitizeHtml(data.rows[i].about, sanitizeConfigNoLink),
 			badges: data.rows[i].badges,
 			pfp_url: data.rows[i].pfp_url || "/img/user.svg",
 		};

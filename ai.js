@@ -21,7 +21,7 @@ async function infiniteCraft(firstWord, secondWord) {
 					content: "Reply with the result of what would happen if you combine " + firstWord + " and " + secondWord + ". The answer has to be related to both words and the context of the words and may not contain the words themselves. ",
 				},
 			],
-			model: "llama3-groq-70b-8192-tool-use-preview",
+			model: "llama3-groq-8b-8192-tool-use-preview",
 			max_tokens: 128,
 		})
 	).choices[0]?.message?.content;

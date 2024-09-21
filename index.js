@@ -16,7 +16,6 @@ const __dirname = dirname(__filename);
 
 const port = process.env.PORT || 3000;
 
-
 const app = express();
 app.use(compression());
 app.use(cookieParser());
@@ -135,33 +134,31 @@ app.post("/api/account/upload", async (req, res, next) => {
 	}
 });
 app.get("/api/infinite/get", async (req, res, next) => {
-	if(req.query[1] && req.query[2]) {
+	if (req.query[1] && req.query[2]) {
 		let success = false;
 		let data;
-		let search1 = await infiniteCache.findOne({where: {1: req.query[1],2: req.query[2]}});
+		let search1 = await infiniteCache.findOne({ where: { 1: req.query[1], 2: req.query[2] } });
 		if (search1 !== null) {
-			data = {"item": search1.result_item, "emoji": search1.result_emoji, "new": false};
+			data = { item: search1.result_item, emoji: search1.result_emoji, new: false };
 			success = true;
 		}
-		let search2 = await infiniteCache.findOne({where: {1: req.query[2],2: req.query[1]}});
+		let search2 = await infiniteCache.findOne({ where: { 1: req.query[2], 2: req.query[1] } });
 		if (search2 !== null) {
-			data = {"item": search2.result_item, "emoji": search2.result_emoji, "new": false};
+			data = { item: search2.result_item, emoji: search2.result_emoji, new: false };
 			success = true;
 		}
-		while(!success) {
-			data = await infiniteCraft(req.query[1], req.query[2]);
-			try {
-				let parse = JSON.parse(data);
-				let keys = Object.keys(parse);
-				if(keys.indexOf("item") > -1 && keys.indexOf("emoji") > -1) {
-					success = true;
-					parse.new = true;
-					data = parse;
-					infiniteCache.create({1: req.query[1],2: req.query[2], result_item:data.item, result_emoji:data.emoji})
-				}
-			} catch {
-				continue;
+		data = await infiniteCraft(req.query[1], req.query[2]);
+		try {
+			let parse = JSON.parse(data);
+			let keys = Object.keys(parse);
+			if (keys.indexOf("item") > -1 && keys.indexOf("emoji") > -1) {
+				success = true;
+				parse.new = true;
+				data = parse;
+				infiniteCache.create({ 1: req.query[1], 2: req.query[2], result_item: data.item, result_emoji: data.emoji });
 			}
+		} catch {
+			data = {"item": "N/A", "emoji": "N/A"}
 		}
 		res.send(data);
 	}
@@ -224,7 +221,7 @@ app.use("/u/raw", async (req, res) => {
 	}
 });
 app.use("/u/:username/edit", async (req, res, next) => {
-	if(await isAdmin(req.cookies.token)) {
+	if (await isAdmin(req.cookies.token)) {
 		res.send(await generateAccountPage(req.params.username, req.cookies.token, true));
 		return;
 	}
@@ -294,7 +291,6 @@ server.on("upgrade", (request, socket, head) => {
 		wss.emit("connection", socket, request);
 	});
 });
-
 
 app.use(async (req, res) => {
 	res

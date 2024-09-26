@@ -147,12 +147,15 @@ app.get("/api/infinite/get", async (req, res, next) => {
 			data = { item: search2.result_item, emoji: search2.result_emoji, new: false };
 			success = true;
 		}
+		if(success) {
+			res.send(data);
+			return;
+		}
 		data = await infiniteCraft(req.query[1], req.query[2]);
 		try {
 			let parse = JSON.parse(data);
 			let keys = Object.keys(parse);
 			if (keys.indexOf("item") > -1 && keys.indexOf("emoji") > -1) {
-				success = true;
 				parse.new = true;
 				data = parse;
 				infiniteCache.create({ 1: req.query[1], 2: req.query[2], result_item: data.item, result_emoji: data.emoji });
@@ -160,7 +163,6 @@ app.get("/api/infinite/get", async (req, res, next) => {
 		} catch {
 			data = {"item": "N/A", "emoji": "N/A"}
 		}
-		res.send(data);
 	}
 });
 app.use("/api/account/load", async (req, res, next) => {
@@ -187,6 +189,16 @@ app.use("/admin", async (req, res, next) => {
 			.type("text/html")
 			.status(200)
 			.send(await fs.readFile(`./html/admin.html`));
+	} else {
+		next();
+	}
+});
+app.use("/ai", async (req, res, next) => {
+	if ((await isAdmin(req.cookies.token)) && (await verifyCookie(req.cookies.token))) {
+		res
+			.type("text/html")
+			.status(200)
+			.send(await fs.readFile(`./html/ai.html`));
 	} else {
 		next();
 	}
@@ -281,7 +293,6 @@ app.post("/api/admin/ban", async (req, res) => {
 	let status = await banUser(req.body.name, req.body.reason, req.cookies.token);
 	res.status(200).send(status);
 });
-
 const server = app.listen(port, () => {
 	console.log(log.success("Express is online."));
 	console.log("- " + log.info("http://localhost:" + port));

@@ -133,6 +133,9 @@ app.post("/api/account/upload", async (req, res, next) => {
 		return "KILL YOURSELF";
 	}
 });
+app.get("/api/ai", async (req, res) => {
+	
+})
 app.get("/api/infinite/get", async (req, res, next) => {
 	if (req.query[1] && req.query[2]) {
 		let success = false;

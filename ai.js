@@ -28,5 +28,8 @@ async function infiniteCraft(firstWord, secondWord) {
 	console.log(firstWord, secondWord, data);
 	return data;
 }
+async function chatBot(message, model) {
 
-export { infiniteCraft };
+}
+
+export { infiniteCraft, chatBot };

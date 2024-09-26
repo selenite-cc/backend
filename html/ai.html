@@ -17,6 +17,35 @@
 		<!-- seo + other things -->
 		<title>AI | Selenite</title>
 		<link rel="icon" href="/favicon.ico" />
+		<script>
+			let chatHistory = [];
+			function sendMessage(isUser, message) {
+				chatHistory.push({"role": isUser ? "user" : "assistant", "content": message})
+				let messageElmt = document.createElement("message");
+				messageElmt.classList = isUser ? "user" : "bot";
+				messageElmt.innerText = message;
+				document.getElementById("messages").appendChild(messageElmt);
+				document.getElementById("messages").scroll({
+					top: document.getElementById("messages").scrollHeight,
+					behavior: "smooth",
+				})
+			}
+			async function handleAI(message) {
+				return "this is a placeholder msg whilst i add ai soon™";
+				// await
+			}
+			document.addEventListener("DOMContentLoaded", () => {
+				document.getElementById("chatbox").addEventListener("keypress", async (e) => {
+					if(e.key == "Enter" && document.getElementById("chatbox").value !== "") {
+						let model = "";
+						let message = document.getElementById("chatbox").value;
+						document.getElementById("chatbox").value = "";
+						sendMessage(1, message);
+						sendMessage(0, await handleAI(message, model))
+					}
+				})
+			})
+		</script>
 	</head>
 	<alerts> </alerts>
 	<body id="noscroll">
@@ -31,14 +60,15 @@
 		</header>
 		<script></script>
 		<main>
-			<chat>
-				<div class="messagebox">
-					<input type="text" placeholder="Send a message..." class="chatbox">
-					<button class="sendmsg"></button>
+			<div id="chat">
+				<div id="messages">
 					<message class="user">skibidi</message>
 					<message class="bot">toilet</message>
 				</div>
-			</chat>
+				<div class="messagebox">
+					<input type="text" placeholder="Send a message..." id="chatbox">
+				</div>
+			</div>
 		</main>
 		<footer class="noscroll">
 			<a href="https://gitlab.com/skysthelimit.dev/selenite">Source</a>

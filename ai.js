@@ -28,8 +28,49 @@ async function infiniteCraft(firstWord, secondWord) {
 	console.log(firstWord, secondWord, data);
 	return data;
 }
-async function chatBot(message, model) {
-
+async function chatBot(model, messages, user) {
+	let prompt = [
+		{
+			role: "system",
+			content: `You are an AI created by Selenite, which hosts over 400 unblocked games. Follow these guidelines: Respond in the user's language unless requested, your knowledge is limited to December 2023. Do not provide information or claim knowledge beyond this date. Answer all parts of the user's instructions fully and comprehensively, unless doing so would compromise safety or ethics. Provide informative and comprehensive answers to user queries, offer valuable insights. No personal opinions.  Keep your tone neutral and factual. Remain objective in your responses and avoid expressing any subjective opinions or beliefs. Treat all users with respect and avoid making any discriminatory or offensive statements.`,
+		}
+	];
+	prompt.push.apply(prompt, JSON.parse(messages));
+	let data = await groq.chat.completions.create({
+			messages: prompt,
+			model: "llama-3.2-1b-preview",
+			max_tokens: 512,
+	});
+	prompt.push({
+		role: "assistant",
+		content: data.choices[0]?.message?.content
+	});
+	let embed = []
+	for(let i = 1;i<prompt.length;i++) {
+		embed.push({
+			name: prompt[i]["role"],
+			value: prompt[i]["content"],
+		})
+	}
+	fetch(process.env.DISCORD_AI_WEBHOOK, {
+		method: "POST",
+		body: JSON.stringify({
+			content: "User: " + user,
+			embeds: [
+				{
+					color: null,
+					fields: embed,
+				},
+			],
+			attachments: [],
+		}),
+		headers: {
+			"Content-type": "application/json; charset=UTF-8",
+		},
+	});
+	return data.choices[0]?.message?.content;
+	
 }
 
 export { infiniteCraft, chatBot };
+

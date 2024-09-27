@@ -11,7 +11,8 @@
 		<!-- initialize my stuff -->
 		<script src="/js/all.min.js"></script>
 		<script src="/js/main.js"></script>
-
+		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" integrity="sha512-jB0TkTBeQC9ZSkBqDhdmfTv1qdfbWpGE72yJ/01Srq6hEzZIz2xkz1e57p9ai7IeHMwEG7HpzG6NdptChif5Pg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 		<link rel="stylesheet" href="/style.css" />
 
 		<!-- seo + other things -->
@@ -20,31 +21,40 @@
 		<script>
 			let chatHistory = [];
 			function sendMessage(isUser, message) {
-				chatHistory.push({"role": isUser ? "user" : "assistant", "content": message})
+				chatHistory.push({ role: isUser ? "user" : "assistant", content: message });
 				let messageElmt = document.createElement("message");
 				messageElmt.classList = isUser ? "user" : "bot";
-				messageElmt.innerText = message;
+				messageElmt.innerHTML = DOMPurify.sanitize(marked.parse(message));
 				document.getElementById("messages").appendChild(messageElmt);
 				document.getElementById("messages").scroll({
 					top: document.getElementById("messages").scrollHeight,
 					behavior: "smooth",
-				})
+				});
 			}
 			async function handleAI(message) {
-				return "this is a placeholder msg whilst i add ai soon™";
-				// await
+				return await (
+					await fetch("/api/ai/chat", {
+						method: "POST",
+						body: JSON.stringify({
+							messages: JSON.stringify(chatHistory),
+						}),
+						headers: {
+							"Content-type": "application/json; charset=UTF-8",
+						},
+					})
+				).text();
 			}
 			document.addEventListener("DOMContentLoaded", () => {
 				document.getElementById("chatbox").addEventListener("keypress", async (e) => {
-					if(e.key == "Enter" && document.getElementById("chatbox").value !== "") {
+					if (e.key == "Enter" && document.getElementById("chatbox").value !== "") {
 						let model = "";
 						let message = document.getElementById("chatbox").value;
 						document.getElementById("chatbox").value = "";
 						sendMessage(1, message);
-						sendMessage(0, await handleAI(message, model))
+						sendMessage(0, await handleAI(message, model));
 					}
-				})
-			})
+				});
+			});
 		</script>
 	</head>
 	<alerts> </alerts>
@@ -60,13 +70,14 @@
 		</header>
 		<script></script>
 		<main>
+			<h1>AI Chat Bot</h1>
+			<p>Powered by <a href="https://groq.com">Groq</a>.</p>
+			<!-- <p>Messages are logged for quality assurance. Also <b>PLEASE</b> don't use this to write essays, we have limited resources :(</p> -->
 			<div id="chat">
 				<div id="messages">
-					<message class="user">skibidi</message>
-					<message class="bot">toilet</message>
 				</div>
 				<div class="messagebox">
-					<input type="text" placeholder="Send a message..." id="chatbox">
+					<input type="text" placeholder="Send a message..." id="chatbox" />
 				</div>
 			</div>
 		</main>

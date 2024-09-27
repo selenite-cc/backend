@@ -10,7 +10,7 @@ import compression from "compression";
 import { account_db, infiniteCache } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
-import { infiniteCraft } from "./ai.js";
+import { infiniteCraft, chatBot } from "./ai.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -23,6 +23,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 import WebSocket, { WebSocketServer } from "ws";
+import { verify } from "node:crypto";
 const wss = new WebSocketServer({ noServer: true });
 wss.on("connection", function connection(ws, req, res) {
 	setInterval(() => {
@@ -133,9 +134,13 @@ app.post("/api/account/upload", async (req, res, next) => {
 		return "KILL YOURSELF";
 	}
 });
-app.get("/api/ai", async (req, res) => {
-	
-})
+app.post("/api/ai/chat", async (req, res) => {
+	if (await verifyCookie(req.cookies.token)) {
+		if (req.body.messages) {
+			res.send(await chatBot("", req.body.messages, await getUserFromCookie(req.cookies.token)));
+		}
+	}
+});
 app.get("/api/infinite/get", async (req, res, next) => {
 	if (req.query[1] && req.query[2]) {
 		let success = false;
@@ -150,7 +155,7 @@ app.get("/api/infinite/get", async (req, res, next) => {
 			data = { item: search2.result_item, emoji: search2.result_emoji, new: false };
 			success = true;
 		}
-		if(success) {
+		if (success) {
 			res.send(data);
 			return;
 		}
@@ -164,7 +169,7 @@ app.get("/api/infinite/get", async (req, res, next) => {
 				infiniteCache.create({ 1: req.query[1], 2: req.query[2], result_item: data.item, result_emoji: data.emoji });
 			}
 		} catch {
-			data = {"item": "N/A", "emoji": "N/A"}
+			data = { item: "N/A", emoji: "N/A" };
 		}
 	}
 });
@@ -197,7 +202,7 @@ app.use("/admin", async (req, res, next) => {
 	}
 });
 app.use("/ai", async (req, res, next) => {
-	if ((await isAdmin(req.cookies.token)) && (await verifyCookie(req.cookies.token))) {
+	if (await verifyCookie(req.cookies.token)) {
 		res
 			.type("text/html")
 			.status(200)
@@ -232,7 +237,7 @@ app.use("/u/raw", async (req, res) => {
 	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		res.send(await getRawData(req.cookies.token));
 	} else {
-		res.redirect("/login");
+		res.redirect("/register");
 	}
 });
 app.use("/u/:username/edit", async (req, res, next) => {
@@ -254,7 +259,7 @@ app.use("/u/", async (req, res) => {
 	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		res.send(await generateAccountPage(req.params.username, req.cookies.token));
 	} else {
-		res.redirect("/login");
+		res.redirect("/register");
 	}
 });
 

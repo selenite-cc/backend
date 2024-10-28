@@ -10,6 +10,7 @@ import { accs, infdb } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { infiniteCraft, chatBot } from "./ai.js";
+import os from "node:os";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -211,6 +212,21 @@ app.use("/admin", async (req, res, next) => {
 			.type("text/html")
 			.status(200)
 			.send(await fs.readFile(`./html/admin.html`));
+	} else {
+		next();
+	}
+});
+app.use("/api/stats", async (req, res, next) => {
+	if ((await isAdmin(req.cookies.token)) && (await verifyCookie(req.cookies.token))) {
+		res
+			.type("text/json")
+			.status(200)
+			.send({
+				"users": accs.query(`SELECT COUNT(*) FROM accounts`).get()["COUNT(*)"],
+				// "cpu": os.cpus(),
+				"ram": `${os.freemem()/1000000000}GB / ${os.totalmem()/1000000000}GB`
+
+			});
 	} else {
 		next();
 	}

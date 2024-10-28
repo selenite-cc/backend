@@ -193,7 +193,7 @@ async function generateAccountPage(name, cookie, admin) {
 		modifiedHTML = modifiedHTML.replaceAll("{{ played_games }}", buildGameHTML(userData));
 		let badges_html = "";
 
-		if (existingAccount.badges !== null) {
+		if (userData.badges !== null) {
 			let badges = JSON.parse(userData.badges);
 			for (let i = 0; i < badges.length; i++) {
 				badges_html += `<img src="/img/badges/${badges[i]}.svg" class="badges" alt="${badge[badges[i]]}" title="${badge[badges[i]]}">`;

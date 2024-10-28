@@ -36,6 +36,7 @@
 					await fetch("/api/ai/chat", {
 						method: "POST",
 						body: JSON.stringify({
+							model: document.getElementById("models").value,
 							messages: JSON.stringify(chatHistory),
 						}),
 						headers: {
@@ -72,7 +73,15 @@
 		<main>
 			<h1>AI Chat Bot</h1>
 			<p>Powered by <a href="https://groq.com">Groq</a>.</p>
-			<!-- <p>Messages are logged for quality assurance. Also <b>PLEASE</b> don't use this to write essays, we have limited resources :(</p> -->
+			<p class="evensmaller">Messages are logged for quality assurance. Don't type any personal information.</p>
+			<select id="models">
+				<option>Select a model:</option>
+				<option value="1b">LLAMA 3.2 1B (Speed: 100%, Quality: 40%)</option>
+				<option value="3b">LLAMA 3.2 3B (Speed: 90%, Quality: 50%)</option>
+				<option value="11b">LLAMA 3.2 11B (Speed: 60%, Quality: 70%, image support)</option>
+				<option value="8b">LLAMA 3.1 8B (Speed: 85%, Quality: 55%)</option>
+				<option value="70b">LLAMA 3.1 70B (Speed: 30%, Quality: 90%)</option>
+			  </select>
 			<div id="chat">
 				<div id="messages">
 				</div>

@@ -32,10 +32,16 @@ async function chatBot(model, messages, user) {
 	let prompt = [
 		{
 			role: "system",
-			content: `You are an AI created by Selenite, which hosts over 400 unblocked games. Follow these guidelines: Respond in the user's language unless requested, your knowledge is limited to December 2023. Do not provide information or claim knowledge beyond this date. Answer all parts of the user's instructions fully and comprehensively, unless doing so would compromise safety or ethics. Provide informative and comprehensive answers to user queries, offer valuable insights. No personal opinions.  Keep your tone neutral and factual. Remain objective in your responses and avoid expressing any subjective opinions or beliefs. Treat all users with respect and avoid making any discriminatory or offensive statements.`,
+			content: `Follow these guidelines: Respond in the user's language unless requested. Your knowledge is limited to December 2023. Do not provide information or claim knowledge beyond this date. Answer all parts of the user's instructions fully and comprehensively, unless doing so would compromise safety or ethics. Provide informative and comprehensive answers to user queries, offer valuable insights. No personal opinions.  Keep your tone neutral and factual. Remain objective in your responses and avoid expressing any subjective opinions or beliefs. Treat all users with respect and avoid making any discriminatory or offensive statements.`,
 		}
 	];
-	prompt.push.apply(prompt, JSON.parse(messages));
+	let newMessages = JSON.parse(messages);
+	for(let i = 0;i<newMessages.length;i++) {
+		if(newMessages[i]["role"] !== "user" && newMessages[i]["role"] !== "assistant") {
+			newMessages.splice(i, 1);
+		}
+	}
+	prompt.push.apply(prompt, );
 	let data = await groq.chat.completions.create({
 			messages: prompt,
 			model: "llama-3.2-1b-preview",

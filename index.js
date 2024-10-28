@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { log } from "./log.js";
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -7,7 +6,7 @@ import { fileURLToPath } from "url";
 import path, { dirname } from "node:path";
 import mime from "mime-types";
 import compression from "compression";
-import { account_db, infiniteCache } from "./database.js";
+import { accs, infdb } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { infiniteCraft, chatBot } from "./ai.js";
@@ -23,7 +22,6 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 import WebSocket, { WebSocketServer } from "ws";
-import { verify } from "node:crypto";
 const wss = new WebSocketServer({ noServer: true });
 wss.on("connection", function connection(ws, req, res) {
 	setInterval(() => {
@@ -43,18 +41,21 @@ wss.on("connection", function connection(ws, req, res) {
 		} else if (message.startsWith("token") && (await verifyCookie(message.substring(6)))) {
 			ws.id = await getUserFromCookie(message.substring(6));
 			ws.send(ws.id);
-			await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: ws.id } });
+			const updateAccount = accs.query(`UPDATE accounts SET last_login = $login WHERE username = $user`)
+			updateAccount.get({ $login: new Date().toUTCString(), $user: ws.id });
 		} else if (message.startsWith("pong")) {
 			if (ws.id) {
-				await account_db.update({ last_login: new Date().toUTCString() }, { where: { username: ws.id } });
+				const updateAccount = accs.query(`UPDATE accounts SET last_login = $login WHERE username = $user`)
+				updateAccount.get({ $login: new Date().toUTCString(), $user: ws.id });
 				if (message.substring(4)) {
-					const existingAccounts = await account_db.findOne({ where: { username: ws.id } });
-					if (existingAccounts == null) {
+					const existingAccount = accs.query(`SELECT * FROM accounts WHERE username LIKE $1`)
+					let userData = existingAccount.get({ $1: ws.id });
+					if (userData == null) {
 						return { success: false, reason: "The account doesn't exist." };
 					}
 					let games;
-					if (existingAccounts.playedgames) {
-						games = JSON.parse(existingAccounts.playedgames);
+					if (userData.playedgames) {
+						games = JSON.parse(userData.playedgames);
 					} else {
 						games = {};
 					}
@@ -63,7 +64,8 @@ wss.on("connection", function connection(ws, req, res) {
 					} else {
 						games[message.substring(4)] = 30;
 					}
-					await account_db.update({ playedgames: JSON.stringify(games) }, { where: { username: ws.id } });
+					const updateAccount = accs.query(`UPDATE accounts SET playedgames = $playedgames WHERE username = $user`)
+					updateAccount.get({ $playedgames: JSON.stringify(games), $user: ws.id });
 				}
 			}
 		}
@@ -137,7 +139,7 @@ app.post("/api/account/upload", async (req, res, next) => {
 app.post("/api/ai/chat", async (req, res) => {
 	if (await verifyCookie(req.cookies.token)) {
 		if (req.body.messages) {
-			res.send(await chatBot("", req.body.messages, await getUserFromCookie(req.cookies.token)));
+			res.send(await chatBot(req.body.model, req.body.messages, await getUserFromCookie(req.cookies.token)));
 		}
 	}
 });
@@ -145,17 +147,25 @@ app.get("/api/infinite/get", async (req, res, next) => {
 	if (req.query[1] && req.query[2]) {
 		let success = false;
 		let data;
-		let search1 = await infiniteCache.findOne({ where: { 1: req.query[1], 2: req.query[2] } });
-		if (search1 !== null) {
-			data = { item: search1.result_item, emoji: search1.result_emoji, new: false };
-			success = true;
-		}
-		let search2 = await infiniteCache.findOne({ where: { 1: req.query[2], 2: req.query[1] } });
-		if (search2 !== null) {
-			data = { item: search2.result_item, emoji: search2.result_emoji, new: false };
-			success = true;
-		}
+        try {
+            let search1Query = infdb.query(`SELECT * FROM caches WHERE first = $one AND second = $two`)
+            let search1 = await search1Query.all({ $one: req.query[1], $two: req.query[2] });
+            if (search1 && search1.length > 0) {
+                data = { item: search1[0].result_item, emoji: search1[0].result_emoji, new: false };
+                success = true;
+            } else {
+                let search2Query = infdb.query(`SELECT * FROM caches WHERE first = $two AND second = $one`)
+                let search2 = await search2Query.all({ $one: req.query[1], $two: req.query[2] });
+                if (search2 && search2.length > 0) {
+                    data = { item: search2[0].result_item, emoji: search2[0].result_emoji, new: false };
+                    success = true;
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        }
 		if (success) {
+			console.log("success");
 			res.send(data);
 			return;
 		}
@@ -166,10 +176,14 @@ app.get("/api/infinite/get", async (req, res, next) => {
 			if (keys.indexOf("item") > -1 && keys.indexOf("emoji") > -1) {
 				parse.new = true;
 				data = parse;
-				infiniteCache.create({ 1: req.query[1], 2: req.query[2], result_item: data.item, result_emoji: data.emoji });
+				const createCached = infdb.query(`INSERT INTO caches (first, second, result_item, result_emoji) VALUES ($one, $two, $item, $emoji)`)
+				createCached.run({ $one: req.query[1], $two: req.query[2], $item: data.item, $emoji: data.emoji });
+				res.send(data);
 			}
-		} catch {
+		} catch (error) {
+            console.error(error);
 			data = { item: "N/A", emoji: "N/A" };
+			res.send(data);
 		}
 	}
 });
@@ -202,7 +216,7 @@ app.use("/admin", async (req, res, next) => {
 	}
 });
 app.use("/ai", async (req, res, next) => {
-	if (await verifyCookie(req.cookies.token)) {
+	if (await verifyCookie(req.cookies.token) && isAdmin(req.cookies.token)) {
 		res
 			.type("text/html")
 			.status(200)

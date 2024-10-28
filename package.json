@@ -4,7 +4,7 @@
   "description": "",
   "exports": "./index.js",
   "scripts": {
-    "start": "node --watch index.js",
+    "start": "bun --watch index.js",
     "svg": "node svg-converter.js"
   },
   "keywords": [],

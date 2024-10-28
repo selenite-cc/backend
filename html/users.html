@@ -24,20 +24,18 @@
 				let above = false;
 				let below = false;
 				let data = await (await fetch(`/api/getUsers?page=${page - 1}&query=${query}`)).json();
-				let users = data.rows;
+				let users = data['users'];
 				let url = new URL(location.href);
 
 				pages = Math.ceil(data.count / 12);
 				document.getElementById("users").innerHTML = "";
-				for (let i = 0; i < users.length; i++) {
+				for (let i = 0; i < Object.keys(users).length; i++) {
 					document.getElementById("users").innerHTML += `<a href="/u/${users[i].username}" class="users"><img class="pfp" src="${users[i].pfp_url}"/><div class="user_info"><h1>${users[i].name}</h1><p>${users[i].about}</p></div></a>`;
 				}
 				document.getElementById("pages").innerHTML = "";
 				for (let i = 1; i < pages + 1; i++) {
 					if (i + 6 > page && i - 6 < page) {
 						let curPage = parseInt(page);
-						console.log(curPage)
-						console.log(i, page);
 						let element = document.createElement("a");
 						if (!(i == curPage)) {
 							url.searchParams.set("page", i);
@@ -46,7 +44,6 @@
 						element.setAttribute("class", `pages-btn`);
 						element.innerText = i;
 						document.getElementById("pages").append(element);
-						console.log(element);
 					} else {
 						if (i + 6 > page) {
 							above = true;

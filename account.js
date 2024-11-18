@@ -284,9 +284,11 @@ async function generateCookie(name, pass) {
 }
 
 async function verifyCookie(cookie) {
-	let decrypted = JSON.parse(await decryptCookie(cookie));
-	if (decrypted) {
-		return (await isLoginValid(decrypted["n"], decrypted["p"])) && new Date(decrypted["e"]) > new Date();
+	if(cookie){
+		let decrypted = JSON.parse(await decryptCookie(cookie));
+		if (decrypted) {
+			return (await isLoginValid(decrypted["n"], decrypted["p"])) && new Date(decrypted["e"]) > new Date();
+		}
 	}
 	return false;
 }
@@ -319,7 +321,7 @@ async function decryptCookie(cookie) {
 			}
 		} catch (e) {
 			console.error(e);
-			return false;
+			return {};
 		}
 	}
 }

@@ -1,4 +1,5 @@
 import { log } from "./log.js";
+import bodyParser from "body-parser";
 import express from "express";
 import cookieParser from "cookie-parser";
 import fs from "node:fs/promises";
@@ -6,7 +7,7 @@ import { fileURLToPath } from "url";
 import path, { dirname } from "node:path";
 import mime from "mime-types";
 import compression from "compression";
-import { accs, infdb } from "./database.js";
+import { accs, infdb, polytrack } from "./database.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
 import { infiniteCraft, chatBot } from "./ai.js";
@@ -20,9 +21,11 @@ const app = express();
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.text());
 
 import WebSocket, { WebSocketServer } from "ws";
+import { getDefaultAgent } from "groq-sdk/_shims/index.mjs";
 const wss = new WebSocketServer({ noServer: true });
 wss.on("connection", function connection(ws, req, res) {
 	setInterval(() => {
@@ -188,6 +191,64 @@ app.get("/api/infinite/get", async (req, res, next) => {
 		}
 	}
 });
+app.use("/semag/polytrack/data/", async (req, res, next) => {
+	let path = req.path.substring(1, req.path.length);
+	if(path == "user") {
+		res.sendStatus(200);
+	} else if(path == "leaderboard") {
+		let data = {};
+
+		if(req.method == "POST") {
+			req.body.split("&").forEach((item) => {
+				data[item.split("=")[0]] = item.split("=")[1]
+			});
+			console.log(data);
+			const getExistingRuns = polytrack.query(`SELECT * FROM polytrack WHERE userid = $usrid AND trackid = $trackid`);
+			let existingRuns = getExistingRuns.all({ $usrid: data["userToken"], $trackid: data["trackId"] });
+			let saveRun = true;
+			if(existingRuns !== null) {
+				existingRuns.forEach((item) => {
+					if(saveRun) {
+						if(data.frames > item.frames) {
+							saveRun = false;
+						} else {
+							let deleteRun = polytrack.query(`DELETE FROM polytrack WHERE id = $id`);
+							deleteRun.run({ $id: item.id })
+						}
+					}
+				})
+			}
+			if(saveRun) {
+				const addRun = polytrack.query(`INSERT INTO polytrack (trackid, username, colors, recording, frames, userid) VALUES ($id, $usr, $clr, $record, $frames, $usrid)`)
+				let runData = addRun.run({ $id: data["trackId"], $usr: data["name"], $clr: data["carColors"], $record: data["recording"], $usrid: data["userToken"], $frames: data["frames"] });
+				console.log("run", runData);
+				res.send(runData.lastInsertRowid);
+			}
+		} else {
+			let leaderboard = polytrack.query(`SELECT * FROM polytrack WHERE trackid = $id LIMIT $limit OFFSET $offset`).all({ $id: req.query.trackId, $limit: req.query.amount, $offset: req.query.skip })
+			console.log(leaderboard);
+			let returnValue = {"total": leaderboard.length, "entries":[]}
+			for(let i = 0; i<leaderboard.length;i++) {
+				returnValue["entries"][i] = {};
+				returnValue["entries"][i]["id"] = leaderboard[i]["id"];
+				returnValue["entries"][i]["name"] = decodeURIComponent(leaderboard[i]["username"]);
+				returnValue["entries"][i]["carColors"] = leaderboard[i]["colors"];
+				returnValue["entries"][i]["frames"] = leaderboard[i]["frames"];
+				returnValue["entries"][i]["verifiedState"] = true;
+				returnValue["entries"][i]["isSelf"] = false;
+			}
+			res.send(returnValue);
+		}
+	} else if(path == "recording") {
+		let recordingQuery = polytrack.query(`SELECT * FROM polytrack WHERE id = $id`).get({ $id: req.query.recordingId });
+		res.send({
+			"recording": recordingQuery.recording,
+			"frames": recordingQuery.frames,
+			"verifiedState": true,
+			"carColors": recordingQuery.colors
+		});	
+	}
+}) 
 app.use("/api/account/load", async (req, res, next) => {
 	if (req.cookies.token && (await verifyCookie(req.cookies.token))) {
 		let status = await retrieveData(req.cookies.token);
@@ -202,6 +263,7 @@ app.use("/api/account/load", async (req, res, next) => {
 });
 
 app.use("/api/getUsers", async (req, res, next) => {
+	console.log(req.query)
 	let status = await getUsers(req.query.page, req.query.query);
 	res.status(200).send(status);
 });

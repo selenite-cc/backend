@@ -7,6 +7,38 @@ let groq_keys = JSON.parse(process.env.GROQ_API_KEY);
 // }
 
 const groq = new Groq({ apiKey: groq_keys[0] });
+let models = {
+	"average": [
+		"gemma-7b-it",
+		"gemma2-9b-it",
+		"llama-3.1-8b-instant",
+		"llama-3.2-11b-vision-preview",
+		"llama3-8b-8192",
+		"mixtral-8x7b-32768"
+	],
+	"smart": [
+		"llama-3.1-70b-versatile",
+		"llama3-70b-8192",
+		"llama-3.2-90b-vision-preview"
+	],
+	"dumb": [
+		"llama-3.2-3b-preview",
+		"llama-3.2-1b-preview"
+	]
+}
+let freeTokens = {
+	"gemma-7b-it": "500000",
+	"gemma2-9b-it": "500000",
+	"llama-3.1-8b-instant": "500000",
+	"llama-3.2-11b-vision-preview": "500000",
+	"llama3-8b-8192": "500000",
+	"mixtral-8x7b-32768": "500000",
+	"llama-3.1-70b-versatile": "500000",
+	"llama3-70b-8192": "500000",
+	"llama-3.2-90b-vision-preview": "500000",
+	"llama-3.2-3b-preview": "500000",
+	"llama-3.2-1b-preview": "500000"
+}
 
 async function infiniteCraft(firstWord, secondWord) {
 	let data = (
@@ -29,6 +61,9 @@ async function infiniteCraft(firstWord, secondWord) {
 	return data;
 }
 async function chatBot(model, messages, user) {
+	console.log(models[model]);
+	let usedModel = models[model][Math.floor(Math.random() * models[model].length) + 1]
+	console.log(usedModel);
 	let prompt = [
 		{
 			role: "system",
@@ -44,9 +79,10 @@ async function chatBot(model, messages, user) {
 	prompt.push.apply(prompt, );
 	let data = await groq.chat.completions.create({
 			messages: prompt,
-			model: "llama-3.2-1b-preview",
+			model: usedModel,
 			max_tokens: 512,
 	});
+	console.log(prompt);
 	prompt.push({
 		role: "assistant",
 		content: data.choices[0]?.message?.content

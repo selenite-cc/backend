@@ -52,7 +52,7 @@
 						let message = document.getElementById("chatbox").value;
 						document.getElementById("chatbox").value = "";
 						sendMessage(1, message);
-						sendMessage(0, await handleAI(message, model));
+						sendMessage(0, await handleAI(message));
 					}
 				});
 			});
@@ -76,11 +76,9 @@
 			<p class="evensmaller">Messages are logged for quality assurance. Don't type any personal information.</p>
 			<select id="models">
 				<option>Select a model:</option>
-				<option value="1b">LLAMA 3.2 1B (Speed: 100%, Quality: 40%)</option>
-				<option value="3b">LLAMA 3.2 3B (Speed: 90%, Quality: 50%)</option>
-				<option value="11b">LLAMA 3.2 11B (Speed: 60%, Quality: 70%, image support)</option>
-				<option value="8b">LLAMA 3.1 8B (Speed: 85%, Quality: 55%)</option>
-				<option value="70b">LLAMA 3.1 70B (Speed: 30%, Quality: 90%)</option>
+				<option value="average">Average (Recommended)</option>
+				<option value="dumb">Dumb (but fast)</option>
+				<option value="genius">Genius (but slow)</option>
 			  </select>
 			<div id="chat">
 				<div id="messages">

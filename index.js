@@ -152,14 +152,16 @@ app.get("/api/infinite/get", async (req, res, next) => {
 		let success = false;
 		let data;
         try {
-            let search1Query = infdb.query(`SELECT * FROM caches WHERE first = $one AND second = $two`)
-            let search1 = await search1Query.all({ $one: req.query[1], $two: req.query[2] });
+            let search1Query = infdb.query(`SELECT * FROM caches WHERE 1 = $one AND 2 = $two`)
+            let search1 = await search1Query.get({ $one: req.query[1], $two: req.query[2] });
+			console.log(search1);
             if (search1 && search1.length > 0) {
                 data = { item: search1[0].result_item, emoji: search1[0].result_emoji, new: false };
                 success = true;
             } else {
-                let search2Query = infdb.query(`SELECT * FROM caches WHERE first = $two AND second = $one`)
-                let search2 = await search2Query.all({ $one: req.query[1], $two: req.query[2] });
+                let search2Query = infdb.query(`SELECT * FROM caches WHERE 1 = $two AND 2 = $one`)
+                let search2 = await search2Query.get({ $one: req.query[1], $two: req.query[2] });
+				console.log(search2);
                 if (search2 && search2.length > 0) {
                     data = { item: search2[0].result_item, emoji: search2[0].result_emoji, new: false };
                     success = true;
@@ -180,7 +182,7 @@ app.get("/api/infinite/get", async (req, res, next) => {
 			if (keys.indexOf("item") > -1 && keys.indexOf("emoji") > -1) {
 				parse.new = true;
 				data = parse;
-				const createCached = infdb.query(`INSERT INTO caches (first, second, result_item, result_emoji) VALUES ($one, $two, $item, $emoji)`)
+				const createCached = infdb.query(`INSERT INTO caches (1, 2, result_item, result_emoji) VALUES ($one, $two, $item, $emoji)`)
 				createCached.run({ $one: req.query[1], $two: req.query[2], $item: data.item, $emoji: data.emoji });
 				res.send(data);
 			}

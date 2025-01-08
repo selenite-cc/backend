@@ -1,3 +1,4 @@
+const io = require('@pm2/io')
 import { log } from "./log.js";
 import bodyParser from "body-parser";
 import express from "express";
@@ -8,8 +9,10 @@ import path, { dirname } from "node:path";
 import mime from "mime-types";
 import compression from "compression";
 import { accs, infdb, polytrack } from "./database.js";
-import { createProxyMiddleware } from "http-proxy-middleware";
-import { banUser, removeAccount, verifyCookie, getUsers, getUserFromCookie, getRawData, retrieveData, createAccount, resetPassword, generateAccountPage, loginAccount, editProfile, addBadge, isAdmin, saveData } from "./account.js";
+import {  } from "./accounts/friend.js";
+import { banUser, removeAccount, verifyCookie, getUserFromCookie, createAccount, resetPassword, loginAccount, addBadge } from "./accounts/manage.js";
+import {  } from "./accounts/misc.js";
+import { getRawData, generateAccountPage, editProfile, saveData, getUsers, isAdmin, retrieveData } from "./accounts/profile.js";
 import { infiniteCraft, chatBot } from "./ai.js";
 import os from "node:os";
 const __filename = fileURLToPath(import.meta.url);
@@ -23,11 +26,34 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.text());
+let requests = 0;
+const requestsPerSec = io.meter({
+	name: 'req/sec',
+	id: 'app/requests/sec'
+});
+const requestsPerMin = io.meter({
+	name: 'req/min',
+	id: 'app/requests/min'
+});
+app.use("/", (req, res, next) => {
+	requestsPerSec.mark();
+	requestsPerMin.mark();
+	next();
+});
+const sockets = io.metric({
+	name: 'Open Websockets',
+	id: 'app/requests/sockets',
+});
+// setInterval(()=>{
 
+// }, 1000)
 import WebSocket, { WebSocketServer } from "ws";
-import { getDefaultAgent } from "groq-sdk/_shims/index.mjs";
+import { request } from "node:http";
 const wss = new WebSocketServer({ noServer: true });
+let openSockets = 0;
 wss.on("connection", function connection(ws, req, res) {
+	openSockets++;
+	sockets.set(openSockets);
 	setInterval(() => {
 		ws.send("ping");
 	}, 30000);
@@ -75,15 +101,25 @@ wss.on("connection", function connection(ws, req, res) {
 		}
 	});
 
-	ws.on("close", () => {});
+	ws.on("close", () => {openSockets--;
+		sockets.set(openSockets);});
 });
 app.post(
-	"/api/event",
-	createProxyMiddleware({
-		target: "http://plausible.selenite.cc",
-		changeOrigin: true,
-	})
-);
+		"/api/event",
+		(req, res) => {
+			fetch("https://analytics.skysthelimit.dev/api/event", {
+				method: "post",
+				headers: {
+				  'Accept': 'application/json',
+				  'Content-Type': 'application/json'
+				},
+			  
+				body: req.body
+			  }).then(async (response) => {
+				res.send(response.status);
+			  })
+		}
+	);
 // app.use("*.json", async (req, res, next) => {
 //	optimize json
 // 	console.log("got data");
@@ -288,8 +324,10 @@ app.use("/api/stats", async (req, res, next) => {
 			.send({
 				"users": accs.query(`SELECT COUNT(*) FROM accounts`).get()["COUNT(*)"],
 				// "cpu": os.cpus(),
-				"ram": `${os.freemem()/1000000000}GB / ${os.totalmem()/1000000000}GB`
-
+				"ram": `${(os.totalmem()-os.freemem())/1000000000}GB / ${os.totalmem()/1000000000}GB`,
+				"cpuUsage": os.loadavg(),
+				"openWebSockets": openSockets,
+				"uptime": `${os.uptime()}s`
 			});
 	} else {
 		next();

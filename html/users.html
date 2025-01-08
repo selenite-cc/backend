@@ -27,7 +27,7 @@
 				let users = data['users'];
 				let url = new URL(location.href);
 
-				pages = Math.ceil(data.count / 12);
+				pages = Math.floor(data.count / 12);
 				document.getElementById("users").innerHTML = "";
 				for (let i = 0; i < Object.keys(users).length; i++) {
 					document.getElementById("users").innerHTML += `<a href="/u/${users[i].username}" class="users"><img class="pfp" src="${users[i].pfp_url}"/><div class="user_info"><h1>${users[i].name}</h1><p>${users[i].about}</p></div></a>`;

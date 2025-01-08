@@ -19,43 +19,7 @@
 		<title>AI | Selenite</title>
 		<link rel="icon" href="/favicon.ico" />
 		<script>
-			let chatHistory = [];
-			function sendMessage(isUser, message) {
-				chatHistory.push({ role: isUser ? "user" : "assistant", content: message });
-				let messageElmt = document.createElement("message");
-				messageElmt.classList = isUser ? "user" : "bot";
-				messageElmt.innerHTML = DOMPurify.sanitize(marked.parse(message));
-				document.getElementById("messages").appendChild(messageElmt);
-				document.getElementById("messages").scroll({
-					top: document.getElementById("messages").scrollHeight,
-					behavior: "smooth",
-				});
-			}
-			async function handleAI(message) {
-				return await (
-					await fetch("/api/ai/chat", {
-						method: "POST",
-						body: JSON.stringify({
-							model: document.getElementById("models").value,
-							messages: JSON.stringify(chatHistory),
-						}),
-						headers: {
-							"Content-type": "application/json; charset=UTF-8",
-						},
-					})
-				).text();
-			}
-			document.addEventListener("DOMContentLoaded", () => {
-				document.getElementById("chatbox").addEventListener("keypress", async (e) => {
-					if (e.key == "Enter" && document.getElementById("chatbox").value !== "") {
-						let model = "";
-						let message = document.getElementById("chatbox").value;
-						document.getElementById("chatbox").value = "";
-						sendMessage(1, message);
-						sendMessage(0, await handleAI(message));
-					}
-				});
-			});
+			
 		</script>
 	</head>
 	<alerts> </alerts>
